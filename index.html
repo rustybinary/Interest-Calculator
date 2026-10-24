@@ -1,0 +1,1475 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Free Indian interest calculator for savings accounts, fixed deposits and recurring deposits, with TDS and income tax under the old and new regimes.">
+<meta name="theme-color" content="#0b2422">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Interest Calculator">
+<meta property="og:description" content="Savings, FD and RD interest with TDS and income tax under both regimes, using customisable rate cards.">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230b2422'/%3E%3Cpath d='M12 46 L26 32 L36 40 L52 18' fill='none' stroke='%23ffb627' stroke-width='6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E">
+<title>Interest Calculator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@500;600&family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&display=swap">
+<style>
+/* Layout: results hero + detail on the right, controls on the left at desktop; one column on phones (hero, controls, detail). */
+:root {
+  --bg: #eceef3;
+  --surface: #ffffff;
+  --surface2: #f2f3f8;
+  --fg: #14171f;
+  --muted: #596073;
+  --line: #dcdfe8;
+  --accent: #3236a6;
+  --accent-fg: #ffffff;
+  --hero-bg: #2a2e86;
+  --hero-fg: #ffffff;
+  --hero-dim: rgba(255,255,255,.74);
+  --pos: #17753f;
+  --slab1: #c4640c;
+  --slab2: #17753f;
+  --warn: #b3261e;
+  --font-display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-num: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1015; --surface: #171a22; --surface2: #1f232d; --fg: #eceef5; --muted: #9ba2b4;
+    --line: #2a2f3d; --accent: #9296ff; --accent-fg: #10121a; --hero-bg: #22256a; --hero-fg: #ffffff;
+    --hero-dim: rgba(255,255,255,.7); --pos: #4cc27f; --slab1: #f09a3e; --slab2: #4cc27f; --warn: #ff8a80;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1015; --surface: #171a22; --surface2: #1f232d; --fg: #eceef5; --muted: #9ba2b4;
+  --line: #2a2f3d; --accent: #9296ff; --accent-fg: #10121a; --hero-bg: #22256a; --hero-fg: #ffffff;
+  --hero-dim: rgba(255,255,255,.7); --pos: #4cc27f; --slab1: #f09a3e; --slab2: #4cc27f; --warn: #ff8a80;
+  color-scheme: dark;
+}
+/* Extra slab colours for 3+ slabs; slab 1 and 2 use --slab1 / --slab2 above. */
+:root { --slab3: #2563b8; --slab4: #8a3fb0; --slab5: #0e8585; --slab6: #b8325e; --hero-fd: #0d5a58; --hero-rd: #6a2a5e; }
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) { --slab3: #6aa8ff; --slab4: #c48cf0; --slab5: #4fd1c5; --slab6: #f07fa4; --hero-fd: #0f4a49; --hero-rd: #4d2046; }
+}
+:root[data-theme="dark"] { --slab3: #6aa8ff; --slab4: #c48cf0; --slab5: #4fd1c5; --slab6: #f07fa4; --hero-fd: #0f4a49; --hero-rd: #4d2046; }
+* { box-sizing: border-box; }
+body {
+  background: var(--bg); color: var(--fg);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.45;
+  padding-block: 20px 40px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+.wrap { max-width: 1080px; margin: 0 auto; }
+.top { margin-bottom: 18px; }
+h1 { font-family: var(--font-display); font-weight: 700; font-size: 28px; letter-spacing: -.01em; margin: 0 0 2px; text-wrap: balance; }
+.top p { margin: 0; color: var(--muted); }
+.layout { display: grid; gap: 16px; grid-template-columns: minmax(0, 1fr); }
+.layout[hidden] { display: none; }
+@media (min-width: 900px) {
+  .layout { grid-template-columns: 400px minmax(0, 1fr); grid-template-rows: auto 1fr; align-items: start; }
+  .layout > .controls { grid-column: 1; grid-row: 1 / span 2; }
+  .layout > .hero { grid-column: 2; grid-row: 1; }
+  .layout > .detail { grid-column: 2; grid-row: 2; }
+}
+.controls, .detail { display: grid; gap: 16px; min-width: 0; }
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 18px; min-width: 0; }
+.card h2 { font-family: var(--font-display); font-size: 16px; font-weight: 600; margin: 0 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.hero { background: var(--hero-bg); color: var(--hero-fg); border-radius: 14px; padding: 22px; min-width: 0; }
+.eyebrow { font-size: 12px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--hero-dim); }
+.big { font-family: var(--font-num); font-weight: 600; font-size: clamp(30px, 8vw, 46px); line-height: 1.1; margin: 6px 0 14px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.hero hr { border: 0; border-top: 1px solid rgba(255,255,255,.22); margin: 0 0 14px; }
+.stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.stat span { display: block; font-size: 12px; color: var(--hero-dim); }
+.stat b { display: block; font-family: var(--font-num); font-weight: 600; font-size: 16px; font-variant-numeric: tabular-nums; overflow-wrap: anywhere; }
+@media (max-width: 420px) { .stats { grid-template-columns: 1fr 1fr; } }
+label.field { display: block; font-size: 13px; color: var(--muted); margin-bottom: 4px; }
+.amount { display: flex; align-items: center; gap: 6px; background: var(--surface2); border: 1px solid var(--line); border-radius: 10px; padding: 4px 12px; }
+.amount:focus-within, input:focus-visible, button:focus-visible, summary:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.amount span { font-family: var(--font-num); font-size: 22px; color: var(--muted); }
+.amount input { flex: 1; min-width: 0; border: 0; background: transparent; color: var(--fg); font-family: var(--font-num); font-weight: 600; font-size: 24px; padding: 8px 0; outline: none; font-variant-numeric: tabular-nums; }
+.words { color: var(--muted); font-size: 13px; margin: 6px 0 0; min-height: 19px; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.chip { font: inherit; font-size: 14px; font-weight: 500; padding: 7px 14px; border-radius: 999px; border: 1px solid var(--line); background: var(--surface2); color: var(--fg); cursor: pointer; }
+.chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.seg .chip { border-radius: 10px; padding: 10px 8px; }
+input[type="date"], .num, .slabin { font: inherit; color: var(--fg); background: var(--surface2); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; min-width: 0; }
+input[type="date"] { width: 100%; font-variant-numeric: tabular-nums; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+.row .muted { color: var(--muted); }
+.row b { font-variant-numeric: tabular-nums; }
+details { margin-top: 14px; border-top: 1px solid var(--line); padding-top: 10px; }
+summary { cursor: pointer; font-weight: 500; color: var(--accent); }
+.grid3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+.grid3 .num { width: 100%; }
+.hint { font-size: 13px; color: var(--muted); margin: 12px 0 0; }
+.slabrow { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+.dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+.slabrow .rate { margin-left: auto; font-family: var(--font-num); font-weight: 600; font-size: 18px; }
+.split { display: flex; height: 12px; border-radius: 999px; overflow: hidden; background: var(--surface2); margin-top: 6px; }
+.split i { display: block; height: 100%; }
+.shead, .srow { display: grid; grid-template-columns: minmax(0, 1fr) 88px 36px; gap: 8px; align-items: center; }
+.shead { margin-top: 12px; font-size: 12px; color: var(--muted); }
+.srow { margin-top: 10px; }
+.srow .slbl { grid-column: 1 / -1; font-size: 13px; color: var(--muted); margin-bottom: -4px; }
+.srow .open { color: var(--muted); padding: 8px 2px; }
+.xbtn { font: inherit; font-size: 18px; line-height: 1; width: 36px; height: 36px; border-radius: 8px; border: 1px solid var(--line); background: var(--surface2); color: var(--muted); cursor: pointer; }
+.xbtn:hover:not(:disabled) { color: var(--warn); border-color: var(--warn); }
+.xbtn:disabled { opacity: .4; cursor: default; }
+.addbtn { font: inherit; font-weight: 500; margin-top: 12px; padding: 8px 14px; border-radius: 8px; border: 1px dashed var(--accent); background: transparent; color: var(--accent); cursor: pointer; }
+.addbtn:disabled { opacity: .45; cursor: default; }
+.slabin { width: 100%; font-variant-numeric: tabular-nums; }
+.err { color: var(--warn); font-size: 13px; margin: 8px 0 0; }
+.tabs { display: inline-grid; grid-auto-flow: column; gap: 4px; background: var(--surface2); border-radius: 10px; padding: 3px; }
+.tabs button { font: inherit; font-size: 13px; font-weight: 500; border: 0; border-radius: 8px; padding: 5px 12px; background: transparent; color: var(--muted); cursor: pointer; }
+.tabs button[aria-pressed="true"] { background: var(--surface); color: var(--fg); box-shadow: 0 0 0 1px var(--line); }
+#chart { width: 100%; min-height: 240px; }
+#chart svg { display: block; width: 100%; height: auto; }
+.ax { fill: var(--muted); font-family: var(--font-body); font-size: 11px; }
+.grid { stroke: var(--line); stroke-width: 1; }
+.bar { fill: var(--accent); }
+.list { margin-top: 2px; }
+.item { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); }
+.item .t { font-weight: 600; }
+.item .s { font-size: 12px; color: var(--muted); font-variant-numeric: tabular-nums; }
+.item .v { font-family: var(--font-num); font-weight: 600; color: var(--pos); font-size: 14px; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.more { font: inherit; font-weight: 600; color: var(--accent); background: none; border: 0; padding: 12px 0 0; cursor: pointer; }
+.note { font-size: 12px; color: var(--muted); margin: 16px 0 0; max-width: 70ch; }
+.stack { display: grid; gap: 12px; }
+.stack .hint { margin: 0; }
+.check { display: flex; align-items: center; gap: 8px; font-size: 14px; }
+.check input { width: 18px; height: 18px; accent-color: var(--accent); }
+select.slabin { width: 100%; }
+.cmp { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+@media (max-width: 460px) { .cmp { grid-template-columns: 1fr; } }
+.rbox { border: 1px solid var(--line); border-radius: 12px; padding: 14px; min-width: 0; }
+.rbox.best { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.rname { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; font-weight: 600; }
+.pill { font-size: 11px; font-weight: 600; background: var(--accent); color: var(--accent-fg); border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+.rbig { font-family: var(--font-num); font-weight: 600; font-size: 22px; margin-top: 8px; overflow-wrap: anywhere; font-variant-numeric: tabular-nums; }
+.rsub { font-size: 12px; color: var(--muted); }
+.rbox dl { margin: 12px 0 0; display: grid; gap: 6px; }
+.rbox dl div { display: flex; justify-content: space-between; gap: 8px; font-size: 13px; }
+.rbox dt { color: var(--muted); }
+.rbox dd { margin: 0; font-family: var(--font-num); font-variant-numeric: tabular-nums; text-align: right; }
+.fyrow { display: grid; grid-template-columns: minmax(0, 1.1fr) repeat(3, minmax(0, 1fr)); gap: 8px; padding: 8px 0; border-bottom: 1px solid var(--line); font-size: 13px; font-variant-numeric: tabular-nums; }
+.fyrow.h { color: var(--muted); font-size: 12px; }
+.fytab { overflow-x: auto; }
+.fytab .fyrow { min-width: 420px; }
+.tabbar { display: flex; gap: 6px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 5px; margin-bottom: 16px; overflow-x: auto; }
+.tabbar button { flex: 1 1 0; min-width: max-content; font: inherit; font-weight: 600; padding: 10px 16px; border-radius: 10px; border: 0; background: transparent; color: var(--muted); cursor: pointer; white-space: nowrap; }
+.tabbar button[aria-selected="true"] { background: var(--accent); color: var(--accent-fg); }
+@media (max-width: 480px) { .tabbar button { padding: 10px 8px; font-size: 13px; } }
+body[data-tab="fd"] .hero { background: var(--hero-fd); }
+body[data-tab="rd"] .hero { background: var(--hero-rd); }
+.seg.s3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.seg.s3 .chip { padding: 10px 4px; font-size: 13px; }
+.banner { border-radius: 10px; padding: 10px 12px; font-size: 14px; margin-bottom: 12px; background: var(--surface2); border: 1px solid var(--line); }
+.banner.warn { border-color: var(--slab1); }
+.banner.ok { border-color: var(--pos); }
+.fyrow.c5 { grid-template-columns: minmax(0, 1.1fr) repeat(4, minmax(0, 1fr)); }
+.fytab .fyrow.c5 { min-width: 520px; }
+.gchart { width: 100%; min-height: 240px; }
+.gchart svg { display: block; width: 100%; height: auto; }
+.legend { display: flex; flex-wrap: wrap; gap: 14px; font-size: 12px; color: var(--muted); margin-top: 6px; }
+.legend i { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 6px; }
+.area { fill: var(--accent); fill-opacity: .16; }
+.vline { fill: none; stroke: var(--accent); stroke-width: 2.5; stroke-linejoin: round; }
+.pline { fill: none; stroke: var(--muted); stroke-width: 2; stroke-dasharray: 5 4; }
+.srcs { font-size: 12px; color: var(--muted); }
+.srcs a { color: var(--accent); }
+.ratebox { margin-top: 14px; padding: 12px 14px; border-radius: 10px; background: var(--surface2); border: 1px solid var(--line); }
+.ratebox .rv { font-family: var(--font-num); font-weight: 600; font-size: 26px; font-variant-numeric: tabular-nums; }
+.ratebox .why { font-size: 13px; color: var(--muted); }
+.rc { display: grid; grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr) minmax(0, 1fr); gap: 8px; padding: 8px 10px; border-radius: 8px; font-size: 14px; font-variant-numeric: tabular-nums; align-items: center; }
+.rc span:nth-child(n+2) { text-align: right; font-family: var(--font-num); }
+.rc.h { color: var(--muted); font-size: 12px; }
+.rc.on { background: var(--surface2); box-shadow: inset 0 0 0 1.5px var(--accent); }
+.rc .use { font-weight: 700; color: var(--accent); }
+.rc.sub { margin-top: 6px; border-top: 1px dashed var(--line); border-radius: 0; }
+.crow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)) 36px; gap: 6px; margin-top: 8px; align-items: center; }
+.crow.c3 { grid-template-columns: repeat(3, minmax(0, 1fr)) 36px; }
+.crow.head { font-size: 12px; color: var(--muted); margin-top: 12px; }
+.crow .slabin { padding: 8px 6px; font-size: 14px; }
+.crow .sp { grid-column: span 2; font-size: 13px; color: var(--muted); }
+.linkbtn { font: inherit; font-weight: 500; background: none; border: 0; color: var(--accent); cursor: pointer; padding: 8px 0 0 14px; }
+
+/* ===== v2 look: ink and marigold, graph-paper ground, results panel with a live curve ===== */
+:root {
+  --bg: #e5ebe8; --surface: #fbfdfc; --surface2: #edf3f0; --fg: #0b1f1d; --muted: #4a5f5b; --line: #cdd9d5;
+  --accent: #0a6b59; --accent-fg: #ffffff; --mark: #ffb627; --mark-fg: #261a00;
+  --hero-bg: #0b2422; --hero-fd: #0c2540; --hero-rd: #2c1a3e; --hero-fg: #ffffff; --hero-dim: rgba(255,255,255,.72);
+  --dots: rgba(11,31,29,.11); --pos: #12733c;
+  --font-display: "Bricolage Grotesque", "IBM Plex Sans", system-ui, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #061311; --surface: #0e1e1b; --surface2: #152925; --fg: #e8f2ef; --muted: #93aaa4; --line: #223a35;
+    --accent: #4fd6b8; --accent-fg: #04201a; --mark: #ffbf3c; --mark-fg: #261a00;
+    --hero-bg: #0d2b27; --hero-fd: #0e2a47; --hero-rd: #2c1b42; --dots: rgba(232,242,239,.07); --pos: #4cc27f;
+    --surface2: #152925; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #061311; --surface: #0e1e1b; --surface2: #152925; --fg: #e8f2ef; --muted: #93aaa4; --line: #223a35;
+  --accent: #4fd6b8; --accent-fg: #04201a; --mark: #ffbf3c; --mark-fg: #261a00;
+  --hero-bg: #0d2b27; --hero-fd: #0e2a47; --hero-rd: #2c1b42; --dots: rgba(232,242,239,.07); --pos: #4cc27f;
+  color-scheme: dark;
+}
+body { background-image: radial-gradient(var(--dots) 1px, transparent 1.2px); background-size: 22px 22px; padding-block: 28px 56px; }
+.wrap { max-width: 1120px; }
+.top { display: flex; flex-wrap: wrap; align-items: flex-end; justify-content: space-between; gap: 10px 24px; margin-bottom: 22px; }
+.top > div { min-width: 0; }
+h1 { font-weight: 800; font-size: clamp(34px, 6vw, 56px); letter-spacing: -.035em; line-height: 1; margin: 0 0 10px; }
+.top p { max-width: 52ch; font-size: 16px; }
+.badge { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 500; padding: 7px 12px; border-radius: 999px; background: var(--surface); border: 1px solid var(--line); color: var(--fg); white-space: nowrap; }
+.badge::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--mark); }
+.tabbar { background: var(--surface2); border: 0; border-radius: 18px; padding: 5px; gap: 4px; }
+.tabbar button { border-radius: 14px; padding: 12px 18px; font-size: 15px; transition: background-color .2s, color .2s; }
+.tabbar button:hover:not([aria-selected="true"]) { color: var(--fg); }
+.tabbar button[aria-selected="true"] { background: var(--hero-bg); color: #fff; box-shadow: 0 6px 18px -8px rgba(0,0,0,.45); }
+body[data-tab="fd"] .tabbar button[aria-selected="true"] { background: var(--hero-fd); }
+body[data-tab="rd"] .tabbar button[aria-selected="true"] { background: var(--hero-rd); }
+.card { border-radius: 22px; padding: 22px; border-color: var(--line); }
+.card h2 { font-weight: 700; font-size: 18px; letter-spacing: -.01em; margin-bottom: 14px; }
+.hero { border-radius: 26px; padding: 30px 30px 26px; position: relative; overflow: hidden;
+  background-image: linear-gradient(rgba(255,255,255,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.05) 1px, transparent 1px); background-size: 36px 36px; background-position: -1px -1px; }
+.eyebrow { text-transform: none; letter-spacing: 0; font-size: 15px; font-weight: 500; display: flex; align-items: center; gap: 8px; }
+.eyebrow::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--mark); flex: none; }
+.big { font-family: var(--font-display); font-weight: 800; font-size: clamp(42px, 9.5vw, 76px); letter-spacing: -.035em; line-height: 1; margin: 12px 0 6px; font-variant-numeric: normal; }
+.hline { display: block; width: 100%; height: 76px; margin: 6px 0 14px; overflow: visible; }
+.hline .ha { fill: rgba(255,255,255,.07); }
+.hline .hl { fill: none; stroke: var(--mark); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; vector-effect: non-scaling-stroke; }
+.hline.in { animation: hdraw 1.1s cubic-bezier(.2,.7,.2,1) both; }
+@keyframes hdraw { from { clip-path: inset(-10px 100% -10px 0); } to { clip-path: inset(-10px 0 -10px 0); } }
+@media (prefers-reduced-motion: reduce) { .hline.in { animation: none; } }
+:root[data-theme="dark"] .tabbar button[aria-selected="true"] { background: #1d3f39; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .tabbar button[aria-selected="true"] { background: #1d3f39; } }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) body[data-tab="fd"] .tabbar button[aria-selected="true"] { background: #173d66; } :root:not([data-theme="light"]) body[data-tab="rd"] .tabbar button[aria-selected="true"] { background: #43295e; } }
+:root[data-theme="dark"] body[data-tab="fd"] .tabbar button[aria-selected="true"] { background: #173d66; }
+:root[data-theme="dark"] body[data-tab="rd"] .tabbar button[aria-selected="true"] { background: #43295e; }
+.hero hr { border-top: 1px dashed rgba(255,255,255,.28); }
+.stat span { font-size: 13px; }
+.stat b { font-size: 18px; }
+.amount { border-radius: 16px; padding: 6px 16px; border-width: 1.5px; background: var(--surface2); }
+.amount span { font-size: 26px; color: var(--accent); }
+.amount input { font-size: 30px; }
+.chip { padding: 8px 15px; font-weight: 500; transition: background-color .15s, border-color .15s; }
+.chip:hover { border-color: var(--accent); }
+.chip[aria-pressed="true"] { background: var(--hero-bg); color: #fff; border-color: var(--hero-bg); }
+body[data-tab="fd"] .chip[aria-pressed="true"] { background: var(--hero-fd); border-color: var(--hero-fd); }
+body[data-tab="rd"] .chip[aria-pressed="true"] { background: var(--hero-rd); border-color: var(--hero-rd); }
+:root[data-theme="dark"] .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) .chip[aria-pressed="true"] { background: var(--accent); color: var(--accent-fg); border-color: var(--accent); } }
+input[type="date"], .num, .slabin { border-radius: 12px; padding: 10px 12px; }
+.ratebox { border-radius: 16px; background: var(--surface2); border: 1px dashed var(--line); }
+.ratebox .rv { font-family: var(--font-display); font-weight: 800; font-size: 34px; letter-spacing: -.02em; color: var(--accent); }
+.rbox { border-radius: 18px; padding: 16px; }
+.rbox.best { background: var(--surface2); border: 1.5px solid var(--accent); box-shadow: none; }
+.rbig { font-family: var(--font-display); font-weight: 800; font-size: 28px; letter-spacing: -.02em; }
+.pill { background: var(--mark); color: var(--mark-fg); }
+.banner { border-radius: 14px; }
+.rc.on { box-shadow: inset 0 0 0 1.5px var(--accent); }
+.vline { stroke-width: 3; }
+.area { fill-opacity: .12; }
+.bar { rx: 3; }
+@media (max-width: 520px) {
+  .hero { padding: 22px 20px 20px; border-radius: 22px; }
+  .card { padding: 18px; border-radius: 20px; }
+  .tabbar button { padding: 11px 8px; }
+}
+
+.bdwrap { border-top: 0; margin-top: 6px; }
+.bdwrap > summary { font-weight: 600; font-size: 15px; }
+.bd { margin-top: 12px; }
+.bdctl { display: flex; flex-wrap: wrap; align-items: end; gap: 10px 16px; margin-bottom: 14px; }
+.bdseg { grid-template-columns: repeat(2, auto); }
+.bdseg .chip { padding: 8px 16px; }
+.bdfy { display: grid; gap: 4px; font-size: 13px; }
+.bdfy .slabin { width: auto; min-width: 150px; }
+.stmt, .stmt2 { display: grid; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--surface); }
+.stmt2 { margin-top: 10px; }
+.bl { display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 9px 14px; font-size: 14px; border-top: 1px solid var(--line); }
+.bl:first-child { border-top: 0; }
+.bl span { min-width: 0; }
+.bl b { font-family: var(--font-num); font-weight: 500; font-variant-numeric: tabular-nums; white-space: nowrap; text-align: right; }
+.bl.sub span { color: var(--muted); padding-left: 12px; }
+.bl.sum { background: var(--surface2); }
+.bl.sum b { font-weight: 600; }
+.bl.total { background: var(--hero-bg); color: #fff; font-weight: 600; }
+.bl.total b { font-weight: 600; }
+body[data-tab="fd"] .bl.total { background: var(--hero-fd); }
+body[data-tab="rd"] .bl.total { background: var(--hero-rd); }
+.bslab { border-top: 1px solid var(--line); padding: 4px 14px 8px; overflow-x: auto; }
+.bsh, .bsr { display: grid; grid-template-columns: minmax(110px, 1.4fr) 52px minmax(90px, 1fr) minmax(80px, 1fr); gap: 8px; padding: 5px 0; font-size: 13px; min-width: 380px; font-variant-numeric: tabular-nums; }
+.bsh { color: var(--muted); font-size: 12px; }
+.bsh span:nth-child(n+2), .bsr span:nth-child(n+2) { text-align: right; }
+.bsr span:nth-child(n+3) { font-family: var(--font-num); }
+@media (max-width: 480px) { .bl { font-size: 13px; padding: 8px 12px; } }
+.foot { margin-top: 28px; padding-top: 16px; border-top: 1px dashed var(--line); font-size: 13px; color: var(--muted); }
+</style>
+</head>
+<body>
+
+
+<main class="wrap">
+  <header class="top">
+    <div>
+      <h1>Interest Calculator</h1>
+      <p>Savings accounts, fixed deposits and recurring deposits, with TDS and income tax under both regimes.</p>
+    </div>
+    <span class="badge">Tax rules for FY 2026-27</span>
+  </header>
+
+  <nav class="tabbar" role="tablist" aria-label="Product">
+    <button type="button" role="tab" id="tab-btn-savings" data-tab="savings" aria-selected="true">Savings</button>
+    <button type="button" role="tab" id="tab-btn-fd" data-tab="fd" aria-selected="false">Fixed deposit</button>
+    <button type="button" role="tab" id="tab-btn-rd" data-tab="rd" aria-selected="false">Recurring deposit</button>
+  </nav>
+
+  <div class="layout" id="tab-savings">
+    <section id="hero" class="hero" aria-live="polite">
+      <div class="eyebrow">Total interest</div>
+      <div class="big" id="h-total">—</div>
+      <hr>
+      <div class="stats">
+        <div class="stat"><span id="h1l">Final balance</span><b id="h1v">—</b></div>
+        <div class="stat"><span id="h2l">Effective rate</span><b id="h2v">—</b></div>
+        <div class="stat"><span id="h3l">Days</span><b id="h3v">—</b></div>
+      </div>
+    </section>
+
+    <div id="controls" class="controls">
+      <section class="card">
+        <h2>Balance</h2>
+        <div class="amount"><span>₹</span><input id="amount" type="text" inputmode="decimal" autocomplete="off" aria-label="Balance in rupees"></div>
+        <p class="words" id="words"></p>
+        <div class="chips" id="amount-presets"></div>
+      </section>
+
+      <section class="card">
+        <h2>Period</h2>
+        <label class="field" for="start">Start date</label>
+        <input id="start" type="date">
+        <div class="chips" id="tenure-presets"></div>
+        <div class="row"><span class="muted">Ends on</span><b id="ends"></b></div>
+        <details>
+          <summary>Custom period</summary>
+          <div class="grid3">
+            <div><label class="field" for="yrs">Years</label><input class="num" id="yrs" type="number" min="0" max="50" step="1" inputmode="numeric"></div>
+            <div><label class="field" for="mos">Months</label><input class="num" id="mos" type="number" min="0" max="11" step="1" inputmode="numeric"></div>
+            <div><label class="field" for="dys">Days</label><input class="num" id="dys" type="number" min="0" max="30" step="1" inputmode="numeric"></div>
+          </div>
+        </details>
+      </section>
+
+      <section class="card">
+        <h2>Interest handling</h2>
+        <div class="seg" id="mode-seg"></div>
+        <div class="chips" id="freq-chips"></div>
+        <p class="hint" id="freq-hint"></p>
+      </section>
+
+      <section class="card">
+        <h2>Slab rates</h2>
+        <div id="slab-rows"></div>
+        <p class="hint" style="margin-top:4px">How your balance is split</p>
+        <div class="split" id="split"></div>
+        <details>
+          <summary>Edit slabs</summary>
+          <p class="hint">Each rate applies only to the part of the balance inside its slab. The last slab has no upper limit.</p>
+          <div class="shead"><span>Up to (₹)</span><span>Rate % p.a.</span><span></span></div>
+          <div id="slab-edit"></div>
+          <button class="addbtn" id="add-slab" type="button">+ Add slab</button>
+          <p class="err" id="slab-err" hidden></p>
+        </details>
+      </section>
+
+      <section class="card" id="income-card">
+        <h2>Your income</h2>
+        <div class="stack">
+          <p class="hint">Savings interest is added to your income and taxed at your slab rate. The values below are examples, so replace them with yours.</p>
+          <div>
+            <label class="field" for="inc">Yearly income excluding this interest (₹)</label>
+            <input class="slabin" id="inc" type="text" inputmode="decimal" autocomplete="off">
+          </div>
+          <div>
+            <label class="field" for="age">Age</label>
+            <select class="slabin" id="age">
+              <option value="0">Below 60</option>
+              <option value="1">60 to 79 (senior citizen)</option>
+              <option value="2">80 and above</option>
+            </select>
+          </div>
+          <label class="check" for="sal"><input id="sal" type="checkbox"> I am salaried or a pensioner</label>
+          <div>
+            <label class="field" for="ded">Old regime deductions (80C, 80D, HRA, home loan interest) (₹)</label>
+            <input class="slabin" id="ded" type="text" inputmode="decimal" autocomplete="off">
+          </div>
+          <div class="stack dep-only" hidden>
+            <label class="check" for="pan"><input id="pan" type="checkbox" checked> My PAN is valid and linked with Aadhaar</label>
+            <div>
+              <label class="field" for="oth">Other FD and RD interest at the same bank, per year (₹)</label>
+              <input class="slabin" id="oth" type="text" inputmode="decimal" autocomplete="off">
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <div id="detail" class="detail">
+      <section class="card" id="tax-card">
+        <h2>Income tax on this interest</h2>
+        <div class="cmp" id="cmp"></div>
+        <p class="hint" id="tax-note"></p>
+        <details open class="bdwrap">
+          <summary>How your tax is worked out</summary>
+          <div class="bd" id="bd"></div>
+        </details>
+        <details>
+          <summary>By financial year</summary>
+          <div class="fytab" id="fy-list"></div>
+        </details>
+      </section>
+      <section class="card" id="chart-card">
+        <h2>Interest earned
+          <span class="tabs" id="view-tabs"></span>
+        </h2>
+        <div id="chart"></div>
+      </section>
+      <section class="card" id="break-card">
+        <h2 id="break-title">Month by month</h2>
+        <div class="list" id="list"></div>
+        <button class="more" id="more" type="button" hidden></button>
+      </section>
+    </div>
+  </div>
+  <div class="layout" id="tab-fd" hidden></div>
+  <div class="layout" id="tab-rd" hidden></div>
+
+  <p class="note">An estimate only, not tax or financial advice. Banks differ on credit dates, rounding and slab rules, so check the final figures with your own statement and tax adviser. Rates and tax rules shown are examples for FY 2026-27 and can change.</p>
+  <details class="note srcs">
+    <summary>Rules used</summary>
+    <p>Banks do not deduct TDS from savings account interest. Interest on fixed and recurring deposits is subject to TDS once it passes ₹50,000 a year at one bank (₹1,00,000 for senior citizens), at 10%, or 20% without a valid PAN. FD and RD interest at the same bank is added together. The section is 393(1) under the Income-tax Act 2025, formerly 194A. Form 121 replaces Forms 15G and 15H from FY 2026-27. Slabs shown are for FY 2026-27 and are applied to every year. Surcharge is not included. Fixed deposit interest is counted day by day, on a 366-day basis in financial years with 29 February and 365 otherwise, and rounded to the rupee at each credit; both can be switched off under Edit rate card.</p>
+    <p>Sources: <a href="https://taxgarden.in/blog/tds-on-interest-section-194a-393-guide-india-fy-2026-27" target="_blank" rel="noopener">TaxGarden</a>, <a href="https://www.au.bank.in/faq/tax-on-deposits" target="_blank" rel="noopener">AU Small Finance Bank</a>, <a href="https://tax2win.in/guide/income-tax-on-saving-bank-interest" target="_blank" rel="noopener">Tax2win</a>, <a href="https://cleartax.in/s/income-tax-rebate-us-87a" target="_blank" rel="noopener">ClearTax</a>.</p>
+  </details>
+  <footer class="foot">Free to use. Nothing you enter leaves your browser.</footer>
+</main>
+
+<script>
+// ==LOGIC==
+var FREQS = ['Daily', 'Weekly', 'Monthly', 'Quarterly', 'Half-yearly', 'Yearly'];
+var MON = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var DAY = 86400000;
+
+function parseNum(t) {
+  var s = String(t).replace(/,/g, '').replace(/₹/g, '').trim();
+  if (s === '') return null;
+  var n = Number(s);
+  return isFinite(n) ? n : null;
+}
+function annualInterest(balance, slabs) {
+  var remaining = Math.max(balance, 0), lower = 0, total = 0;
+  for (var i = 0; i < slabs.length; i++) {
+    var width = Math.max(slabs[i].upTo - lower, 0);
+    var portion = Math.min(remaining, width);
+    total += portion * slabs[i].rate / 100;
+    remaining -= portion;
+    lower = slabs[i].upTo;
+    if (remaining <= 0) break;
+  }
+  return total;
+}
+function isCreditDay(ms, dayIndex, freq) {
+  if (freq === 'Daily') return true;
+  if (freq === 'Weekly') return (dayIndex + 1) % 7 === 0;
+  var next = new Date(ms + DAY);
+  if (next.getUTCDate() !== 1) return false;
+  var m = new Date(ms).getUTCMonth() + 1;
+  if (freq === 'Monthly') return true;
+  if (freq === 'Quarterly') return [3, 6, 9, 12].indexOf(m) >= 0;
+  if (freq === 'Half-yearly') return [3, 9].indexOf(m) >= 0;
+  if (freq === 'Yearly') return m === 3;
+  return false;
+}
+function addPeriod(startMs, years, months, days) {
+  var d = new Date(startMs);
+  var total = d.getUTCMonth() + years * 12 + months;
+  var y = d.getUTCFullYear() + Math.floor(total / 12);
+  var m = ((total % 12) + 12) % 12;
+  var dim = new Date(Date.UTC(y, m + 1, 0)).getUTCDate();
+  return Date.UTC(y, m, Math.min(d.getUTCDate(), dim)) + days * DAY;
+}
+function wholeYears(startMs, ms) {
+  var a = new Date(startMs), b = new Date(ms);
+  var y = b.getUTCFullYear() - a.getUTCFullYear();
+  if (b.getUTCMonth() < a.getUTCMonth() ||
+      (b.getUTCMonth() === a.getUTCMonth() && b.getUTCDate() < a.getUTCDate())) y--;
+  return y;
+}
+// Day-by-day simulation. Interest accrues daily on the closing balance and is
+// added (compound) or paid out (payout) only on credit days.
+function calculate(principal, slabs, startMs, endMs, freq, mode) {
+  var r = { totalDays: 0, totalInterest: 0, finalAmount: 0, firstCredit: 0, creditCount: 0,
+            effectiveRate: 0, monthRows: [], yearRows: [], fyRows: [] };
+  var totalDays = Math.round((endMs - startMs) / DAY);
+  if (!(principal > 0) || totalDays <= 0) return r;
+  var s = new Date(startMs);
+  var sy = s.getUTCFullYear(), sm = s.getUTCMonth();
+  var balance = principal, accrued = 0, paidOut = 0, totalInterest = 0;
+  var lastMonth = -1, lastYear = -1, lastFY = -1, ms = startMs;
+  for (var d = 0; d < totalDays; d++) {
+    var todays = annualInterest(balance, slabs) / 365;
+    accrued += todays; totalInterest += todays;
+    var isLast = d === totalDays - 1;
+    if (isCreditDay(ms, d, freq) || isLast) {
+      if (accrued > 0) { if (r.creditCount === 0) r.firstCredit = accrued; r.creditCount++; }
+      if (mode === 'compound') balance += accrued; else paidOut += accrued;
+      accrued = 0;
+    }
+    var cd = new Date(ms);
+    var monthIndex = (cd.getUTCFullYear() - sy) * 12 + (cd.getUTCMonth() - sm);
+    var yearIndex = wholeYears(startMs, ms) + 1;
+    var shown = mode === 'compound' ? balance : paidOut;
+    if (monthIndex !== lastMonth) {
+      r.monthRows.push({ id: monthIndex, title: MON[cd.getUTCMonth()] + ' ' + cd.getUTCFullYear(), interest: 0, balance: 0 });
+      lastMonth = monthIndex;
+    }
+    if (yearIndex !== lastYear) {
+      r.yearRows.push({ id: yearIndex, title: 'Year ' + yearIndex, interest: 0, balance: 0 });
+      lastYear = yearIndex;
+    }
+    var fy = cd.getUTCMonth() >= 3 ? cd.getUTCFullYear() : cd.getUTCFullYear() - 1;
+    if (fy !== lastFY) {
+      r.fyRows.push({ title: 'FY ' + fy + '-' + String(fy + 1).slice(2), interest: 0 });
+      lastFY = fy;
+    }
+    r.fyRows[r.fyRows.length - 1].interest += todays;
+    var mr = r.monthRows[r.monthRows.length - 1], yr = r.yearRows[r.yearRows.length - 1];
+    mr.interest += todays; mr.balance = shown;
+    yr.interest += todays; yr.balance = shown;
+    ms += DAY;
+  }
+  r.totalDays = totalDays;
+  r.totalInterest = totalInterest;
+  r.finalAmount = principal + totalInterest;
+  var yf = totalDays / 365;
+  r.effectiveRate = mode === 'compound'
+    ? (Math.pow(balance / principal, 1 / yf) - 1) * 100
+    : totalInterest / principal / yf * 100;
+  return r;
+}
+
+// Income tax slabs used for every financial year (FY 2026-27 rates).
+var NEW_SLABS = [[400000, 0], [800000, .05], [1200000, .10], [1600000, .15], [2000000, .20], [2400000, .25], [Infinity, .30]];
+var OLD_SLABS = [
+  [[250000, 0], [500000, .05], [1000000, .20], [Infinity, .30]],
+  [[300000, 0], [500000, .05], [1000000, .20], [Infinity, .30]],
+  [[500000, 0], [1000000, .20], [Infinity, .30]]
+];
+function slabTax(income, table) {
+  var tax = 0, lo = 0;
+  for (var i = 0; i < table.length; i++) {
+    var w = Math.min(income, table[i][0]) - lo;
+    if (w > 0) tax += w * table[i][1];
+    lo = table[i][0];
+    if (income <= lo) break;
+  }
+  return tax;
+}
+// One financial year. o = { other, interest, salaried, deductions }. Returns tax including 4% cess.
+function incomeTax(regime, ageBand, o) {
+  var std = o.salaried ? Math.min(o.other, regime === 'new' ? 75000 : 50000) : 0;
+  var gross = o.other + o.interest;
+  var ttDed = 0, ttName = '';
+  if (regime === 'old') {
+    if (o.kind === 'deposit') { if (ageBand >= 1) { ttDed = Math.min(o.interest, 50000); ttName = '80TTB'; } }
+    else if (ageBand === 0) { ttDed = Math.min(o.interest, 10000); ttName = '80TTA'; }
+    else { ttDed = Math.min(o.interest, 50000); ttName = '80TTB'; }
+  }
+  var userDed = regime === 'old' ? o.deductions : 0;
+  var taxable = Math.max(gross - std - ttDed - userDed, 0);
+  var table = regime === 'new' ? NEW_SLABS : OLD_SLABS[ageBand];
+  var slabs = [], lo = 0, sum = 0;
+  for (var i = 0; i < table.length; i++) {
+    var hi = table[i][0], amt = Math.max(Math.min(taxable, hi) - lo, 0), t = amt * table[i][1];
+    slabs.push({ lo: lo, hi: hi, rate: table[i][1], amt: amt, tax: t }); sum += t; lo = hi;
+  }
+  var rebate = 0, relief = 0;
+  if (regime === 'new') {
+    if (taxable <= 1200000) rebate = Math.min(sum, 60000);
+    else relief = Math.max(sum - Math.min(sum, taxable - 1200000), 0);   // marginal relief above 12 lakh
+  } else if (taxable <= 500000) rebate = Math.min(sum, 12500);
+  var before = sum - rebate - relief, cess = before * 0.04;
+  return { taxable: taxable, tax: before + cess,
+    detail: { other: o.other, interest: o.interest, gross: gross, std: std, ttDed: ttDed, ttName: ttName, userDed: userDed, taxable: taxable,
+              slabs: slabs, slabSum: sum, rebate: rebate, relief: relief, before: before, cess: cess, total: before + cess } };
+}
+function taxImpact(fyRows, ageBand, other, salaried, deductions, kind) {
+  var out = { new: { onInterest: 0, total: 0 }, old: { onInterest: 0, total: 0 }, fy: [], interest: 0, maxTaxable: 0 };
+  fyRows.forEach(function (row) {
+    var line = { title: row.title, interest: row.interest };
+    ['new', 'old'].forEach(function (reg) {
+      var withI = incomeTax(reg, ageBand, { other: other, interest: row.interest, salaried: salaried, deductions: deductions, kind: kind });
+      var without = incomeTax(reg, ageBand, { other: other, interest: 0, salaried: salaried, deductions: deductions, kind: kind });
+      line[reg] = withI.tax - without.tax;
+      (line.d = line.d || {})[reg] = { w: withI.detail, wo: without.detail };
+      out[reg].onInterest += withI.tax - without.tax;
+      out[reg].total += withI.tax;
+      out.maxTaxable = Math.max(out.maxTaxable, withI.taxable);
+    });
+    out.interest += row.interest;
+    out.fy.push(line);
+  });
+  return out;
+}
+
+function fyOf(ms) { var d = new Date(ms); return d.getUTCMonth() >= 3 ? d.getUTCFullYear() : d.getUTCFullYear() - 1; }
+function fyTitle(fy) { return 'FY ' + fy + '-' + String(fy + 1).slice(2); }
+function addFY(acc, fy, v) { if (!(fy in acc.map)) { acc.map[fy] = 0; acc.order.push(fy); } acc.map[fy] += v; }
+function fyList(acc) { return acc.order.sort(function (a, b) { return a - b; }).map(function (fy) { return { title: fyTitle(fy), interest: acc.map[fy] }; }); }
+
+// Fixed deposit. mode: 'cumulative' (quarterly compounding, paid at maturity), 'monthly' or 'quarterly' payout.
+function dayBasis(ms, leap) {
+  if (!leap) return 365;
+  var y = fyOf(ms) + 1;   // the financial year ends in this calendar year, and 29 February falls in it
+  return ((y % 4 === 0 && y % 100 !== 0) || y % 400 === 0) ? 366 : 365;
+}
+function fdCalc(P, ratePct, startMs, endMs, mode, simple, opts) {
+  opts = opts || { leap: true, round: true };
+  var res = { principal: P, interest: 0, maturity: P, days: Math.round((endMs - startMs) / DAY), fyRows: [], series: [], firstPayout: 0, payouts: 0, yieldPct: 0 };
+  var r = ratePct / 100;
+  if (!(P > 0) || !(r >= 0) || res.days <= 0) return res;
+  var step = mode === 'monthly' ? 1 : 3, acc = { map: {}, order: [] };
+  if (simple) step = 1200;   // one interval, no compounding (rate cards use simple interest up to 180 days)
+  var bal = P, from = startMs, k = 0, dayCount = 0, accrued = 0;
+  res.series.push({ ms: startMs, principal: P, total: P });
+  while (from < endMs) {
+    var next = addPeriod(startMs, 0, step * (k + 1), 0), full = next <= endMs, to = full ? next : endMs;
+    var days = Math.round((to - from) / DAY);
+    var interest = 0;
+    for (var d0 = 0; d0 < days; d0++) interest += bal * r / dayBasis(from + d0 * DAY, opts.leap);
+    if (opts.round) interest = Math.round(interest);
+    var per = interest / days;
+    for (var d = 0; d < days; d++) {
+      addFY(acc, fyOf(from + d * DAY), per);
+      accrued += per; dayCount++;
+      if (dayCount % 30 === 0 && d < days - 1) res.series.push({ ms: from + (d + 1) * DAY, principal: P, total: P + accrued });
+    }
+    if (mode === 'cumulative') bal += interest;
+    else { if (k === 0) res.firstPayout = interest; res.payouts++; }
+    res.interest += interest;
+    k++; from = to;
+  }
+  res.series.push({ ms: endMs, principal: P, total: P + res.interest });
+  res.maturity = mode === 'cumulative' ? P + res.interest : P;
+  var yrs = res.days / 365;
+  res.yieldPct = (mode === 'cumulative' && !simple) ? (Math.pow((P + res.interest) / P, 1 / yrs) - 1) * 100 : res.interest / P / yrs * 100;
+  res.fyRows = fyList(acc);
+  return res;
+}
+// Recurring deposit: each monthly instalment is treated as its own deposit from its date to maturity,
+// compounded quarterly with the FD day-count; the total interest is rounded to the rupee once.
+function rdCalc(R, ratePct, months, startMs) {
+  var endMs = addPeriod(startMs, 0, months, 0);
+  var res = { instalment: R, months: months, deposited: R * months, interest: 0, maturity: 0, days: Math.round((endMs - startMs) / DAY), endMs: endMs, fyRows: [], series: [] };
+  if (!(R > 0) || !(ratePct >= 0) || !(months > 0)) return res;
+  var opts = { leap: true, round: false }, acc = { map: {}, order: [] }, k, j;
+  for (k = 0; k < months; k++) {
+    var f = fdCalc(R, ratePct, addPeriod(startMs, 0, k, 0), endMs, 'cumulative', false, opts);
+    res.interest += f.interest;
+    for (j = 0; j < f.fyRows.length; j++) addFY(acc, f.fyRows[j].title, f.fyRows[j].interest);
+  }
+  res.interest = Math.round(res.interest);   // rounded once, on the total
+  res.maturity = res.deposited + res.interest;
+  // chart points: value at the end of each month (sampled when the term is long)
+  var stepM = Math.max(1, Math.ceil(months / 40));
+  res.series.push({ ms: startMs, principal: 0, total: 0 });
+  for (var m = stepM; m <= months; m += stepM) {
+    var t = addPeriod(startMs, 0, m, 0), tot = 0, dep = 0;
+    for (k = 0; k < m; k++) { dep += R; tot += fdCalc(R, ratePct, addPeriod(startMs, 0, k, 0), t, 'cumulative', false, opts).maturity; }
+    res.series.push({ ms: t, principal: dep, total: tot });
+  }
+  if (months % stepM) res.series.push({ ms: endMs, principal: res.deposited, total: res.maturity });
+  res.fyRows = Object.keys(acc.map).length ? acc.order.map(function (t) { return { title: t, interest: acc.map[t] }; }) : [];
+  return res;
+}
+// TDS by the bank on FD/RD interest, year by year.
+function tdsPlan(fyRows, ageBand, hasPan, otherBank) {
+  var threshold = ageBand >= 1 ? 100000 : 50000, rate = hasPan ? 0.10 : 0.20, total = 0, crossed = 0;
+  var rows = fyRows.map(function (r) {
+    var over = r.interest + otherBank > threshold, tds = over ? r.interest * rate : 0;
+    total += tds; if (over) crossed++;
+    return tds;
+  });
+  return { rows: rows, total: total, crossed: crossed, threshold: threshold, rate: rate };
+}
+
+// ---- Rate card helpers (rates picked by tenure and age) ----
+function fdLookupDays(y, m, d) { return y * 365 + Math.round(m * 365 / 12) + d; }
+function fmtDays(n) {
+  if (n >= 365 && n % 365 === 0) return (n / 365) + (n === 365 ? ' year' : ' years');
+  return n + (n === 1 ? ' day' : ' days');
+}
+function bandLabel(b) { return (b.from === b.to ? fmtDays(b.from) : fmtDays(b.from) + ' to ' + fmtDays(b.to)); }
+function parseFdBands(list) {
+  var out = [];
+  if (!list.length) return { error: 'Add at least one tenure band to the rate card.' };
+  for (var i = 0; i < list.length; i++) {
+    var f = parseNum(list[i].from), t = parseNum(list[i].to), g = parseNum(list[i].gen), s = parseNum(list[i].sen);
+    if (f === null || t === null || g === null || s === null || f < 0 || t < f || g < 0 || s < 0)
+      return { error: 'Fill in every number on the rate card. Each band must end on or after its start day.' };
+    out.push({ from: f, to: t, gen: g, sen: s });
+  }
+  return { bands: out };
+}
+function parseRdBands(list) {
+  var out = [];
+  if (!list.length) return { error: 'Add at least one tenure to the rate card.' };
+  for (var i = 0; i < list.length; i++) {
+    var m = parseNum(list[i].months), g = parseNum(list[i].gen), s = parseNum(list[i].sen);
+    if (m === null || g === null || s === null || !(m > 0) || g < 0 || s < 0) return { error: 'Fill in every number on the rate card. Tenure must be above zero.' };
+    out.push({ months: m, gen: g, sen: s });
+  }
+  return { bands: out };
+}
+function pickFdRate(bands, days, senior) {
+  for (var i = 0; i < bands.length; i++)
+    if (days >= bands[i].from && days <= bands[i].to) return { rate: senior ? bands[i].sen : bands[i].gen, idx: i };
+  return null;
+}
+function pickRdRate(bands, months, senior) {
+  var best = -1, gap = Infinity;
+  for (var i = 0; i < bands.length; i++) { var g = Math.abs(bands[i].months - months); if (g < gap) { gap = g; best = i; } }
+  return best < 0 ? null : { rate: senior ? bands[best].sen : bands[best].gen, idx: best, exact: gap === 0 };
+}
+// ==END==
+
+var inrFmt = new Intl.NumberFormat('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+var intFmt = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 0 });
+function inr(v) { return '₹' + inrFmt.format(v); }
+function trimmed(v) { return v === Math.round(v) ? String(Math.round(v)) : v.toFixed(2); }
+function shortINR(v) {
+  if (v >= 1e7) return '₹' + trimmed(v / 1e7) + ' Cr';
+  if (v >= 1e5) return '₹' + trimmed(v / 1e5) + ' L';
+  return '₹' + intFmt.format(v);
+}
+function inWords(v) {
+  if (v >= 1e7) return (v / 1e7).toFixed(2) + ' crore';
+  if (v >= 1e5) return (v / 1e5).toFixed(2) + ' lakh';
+  return '';
+}
+function $(id) { return document.getElementById(id); }
+function iso(ms) { return new Date(ms).toISOString().slice(0, 10); }
+function fmtDate(ms) { var d = new Date(ms); return d.getUTCDate() + ' ' + MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
+
+var now = new Date();
+var todayMs = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+var st = { amount: '1000000', startMs: todayMs, years: 1, months: 0, days: 0, mode: 'compound',
+           freq: 'Quarterly', view: 'Monthly', showAll: false,
+           inc: '1200000', age: 0, sal: true, ded: '0',
+           slabs: [{ limit: '300000', rate: '2.5' }, { limit: '2500000', rate: '7' }, { limit: '', rate: '6' }] };
+
+var amountPresets = [['₹1 L', 100000], ['₹5 L', 500000], ['₹10 L', 1000000], ['₹25 L', 2500000], ['₹1 Cr', 10000000]];
+var tenurePresets = [['3 M', 0, 3], ['6 M', 0, 6], ['1 Y', 1, 0], ['2 Y', 2, 0], ['3 Y', 3, 0], ['5 Y', 5, 0]];
+var modes = [['compound', 'Credit to balance'], ['payout', 'Pay out']];
+var chipRefs = [];
+
+function makeChip(parent, label, test, onClick) {
+  var b = document.createElement('button');
+  b.type = 'button'; b.className = 'chip'; b.textContent = label;
+  b.addEventListener('click', onClick);
+  parent.appendChild(b);
+  chipRefs.push({ el: b, test: test });
+}
+
+function build() {
+  amountPresets.forEach(function (p) {
+    makeChip($('amount-presets'), p[0], function () { return parseNum(st.amount) === p[1]; },
+      function () { st.amount = String(p[1]); $('amount').value = intFmt.format(p[1]); render(); });
+  });
+  tenurePresets.forEach(function (t) {
+    makeChip($('tenure-presets'), t[0], function () { return st.years === t[1] && st.months === t[2] && st.days === 0; },
+      function () { st.years = t[1]; st.months = t[2]; st.days = 0; syncPeriodInputs(); render(); });
+  });
+  modes.forEach(function (m) {
+    makeChip($('mode-seg'), m[1], function () { return st.mode === m[0]; },
+      function () { st.mode = m[0]; render(); });
+  });
+  FREQS.forEach(function (f) {
+    makeChip($('freq-chips'), f, function () { return st.freq === f; },
+      function () { st.freq = f; render(); });
+  });
+  ['Monthly', 'Yearly'].forEach(function (v) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.textContent = v;
+    b.addEventListener('click', function () { st.view = v; st.showAll = false; render(); });
+    $('view-tabs').appendChild(b);
+    chipRefs.push({ el: b, test: function () { return st.view === v; } });
+  });
+  $('amount').value = intFmt.format(parseNum(st.amount));
+  $('amount').addEventListener('input', function (e) { st.amount = e.target.value; render(); });
+  $('amount').addEventListener('blur', function (e) {
+    var n = parseNum(e.target.value);
+    if (n !== null && n >= 0) e.target.value = intFmt.format(n);
+  });
+  $('start').value = iso(st.startMs);
+  $('start').addEventListener('input', function (e) {
+    var p = e.target.value.split('-');
+    if (p.length === 3) { st.startMs = Date.UTC(+p[0], +p[1] - 1, +p[2]); render(); }
+  });
+  [['yrs', 'years', 50], ['mos', 'months', 11], ['dys', 'days', 30]].forEach(function (c) {
+    $(c[0]).addEventListener('input', function (e) {
+      var n = parseInt(e.target.value, 10);
+      st[c[1]] = isNaN(n) ? 0 : Math.max(0, Math.min(c[2], n));
+      render();
+    });
+  });
+  $('inc').value = intFmt.format(parseNum(st.inc));
+  $('ded').value = intFmt.format(parseNum(st.ded));
+  $('sal').checked = st.sal;
+  $('age').value = String(st.age);
+  $('inc').addEventListener('input', function (e) { st.inc = e.target.value; render(); });
+  $('ded').addEventListener('input', function (e) { st.ded = e.target.value; render(); });
+  $('sal').addEventListener('change', function (e) { st.sal = e.target.checked; render(); });
+  $('age').addEventListener('change', function (e) { st.age = parseInt(e.target.value, 10); render(); });
+  buildSlabEditor();
+  $('add-slab').addEventListener('click', function () {
+    var n = st.slabs.length, last = st.slabs[n - 1];
+    var prev = n > 1 ? parseNum(st.slabs[n - 2].limit) : 0;
+    if (prev === null) prev = 0;
+    var lim = prev > 0 ? prev * 2 : 300000;
+    st.slabs.splice(n - 1, 0, { limit: String(Math.round(lim)), rate: last.rate });
+    buildSlabEditor(); render();
+  });
+  $('more').addEventListener('click', function () { st.showAll = !st.showAll; render(); });
+  syncPeriodInputs();
+  var rt;
+  window.addEventListener('resize', function () { clearTimeout(rt); rt = setTimeout(render, 120); });
+}
+function syncPeriodInputs() { $('yrs').value = st.years; $('mos').value = st.months; $('dys').value = st.days; }
+
+var MAX_SLABS = 8;
+function slabColor(i) { return 'var(--slab' + ((i % 6) + 1) + ')'; }
+function getSlabs() {
+  var out = [], prev = 0, n = st.slabs.length;
+  for (var i = 0; i < n; i++) {
+    var rate = parseNum(st.slabs[i].rate);
+    if (rate === null || rate < 0) return { error: 'Enter a rate for every slab.' };
+    if (i < n - 1) {
+      var lim = parseNum(st.slabs[i].limit);
+      if (lim === null || !(lim > prev))
+        return { error: i === 0 ? 'Slab 1 needs a limit above zero.' : 'Each limit must be larger than the one before it.' };
+      out.push({ upTo: lim, rate: rate }); prev = lim;
+    } else out.push({ upTo: Infinity, rate: rate });
+  }
+  return { slabs: out };
+}
+function buildSlabEditor() {
+  var box = $('slab-edit'), n = st.slabs.length;
+  box.innerHTML = '';
+  st.slabs.forEach(function (s, i) {
+    var row = document.createElement('div'); row.className = 'srow';
+    var lbl = document.createElement('div'); lbl.className = 'slbl'; lbl.id = 'slbl' + i; row.appendChild(lbl);
+    var lim;
+    if (i < n - 1) {
+      lim = document.createElement('input'); lim.className = 'slabin'; lim.type = 'text'; lim.inputMode = 'decimal';
+      lim.value = s.limit; lim.placeholder = 'Up to (₹)';
+      lim.setAttribute('aria-label', 'Slab ' + (i + 1) + ' upper limit in rupees');
+      lim.addEventListener('input', function (e) { s.limit = e.target.value; render(); });
+    } else {
+      lim = document.createElement('div'); lim.className = 'open'; lim.textContent = 'and above';
+    }
+    var rate = document.createElement('input'); rate.className = 'slabin'; rate.type = 'text'; rate.inputMode = 'decimal';
+    rate.value = s.rate; rate.placeholder = 'Rate %';
+    rate.setAttribute('aria-label', 'Slab ' + (i + 1) + ' rate in percent per year');
+    rate.addEventListener('input', function (e) { s.rate = e.target.value; render(); });
+    var del = document.createElement('button'); del.type = 'button'; del.className = 'xbtn'; del.textContent = '×';
+    del.setAttribute('aria-label', 'Remove slab ' + (i + 1)); del.disabled = n <= 1;
+    del.addEventListener('click', function () { st.slabs.splice(i, 1); buildSlabEditor(); render(); });
+    row.appendChild(lim); row.appendChild(rate); row.appendChild(del);
+    box.appendChild(row);
+  });
+  $('add-slab').disabled = n >= MAX_SLABS;
+}
+
+function niceStep(max) {
+  var rough = max / 4, mag = Math.pow(10, Math.floor(Math.log10(rough)));
+  var n = rough / mag;
+  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 5 ? 5 : 10) * mag;
+}
+function tickLabel(v) {
+  if (v >= 1e7) return '₹' + trimmed(v / 1e7) + ' Cr';
+  if (v >= 1e5) return '₹' + trimmed(v / 1e5) + ' L';
+  return '₹' + intFmt.format(v);
+}
+function drawChart(rows) {
+  var el = $('chart');
+  var W = Math.max(280, el.clientWidth || 560), H = 240;
+  var labels = rows.length <= 12;
+  var ml = 62, mr = 6, mt = 10, mb = labels ? 28 : 12;
+  var pw = W - ml - mr, ph = H - mt - mb;
+  var max = Math.max.apply(null, rows.map(function (r) { return r.interest; }));
+  if (!(max > 0)) max = 1;
+  var step = niceStep(max), top = Math.ceil(max / step - 1e-9) * step, n = Math.round(top / step);
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Interest earned per period">';
+  for (var i = 0; i <= n; i++) {
+    var v = step * i, y = mt + ph - (v / top) * ph;
+    s += '<line class="grid" x1="' + ml + '" x2="' + (W - mr) + '" y1="' + y + '" y2="' + y + '"/>';
+    s += '<text class="ax" x="' + (ml - 8) + '" y="' + (y + 4) + '" text-anchor="end">' + tickLabel(v) + '</text>';
+  }
+  var bw = pw / rows.length, w = Math.max(2, bw * 0.68);
+  rows.forEach(function (r, k) {
+    var h = (r.interest / top) * ph, x = ml + k * bw + (bw - w) / 2, y = mt + ph - h;
+    s += '<rect class="bar" x="' + x + '" y="' + y + '" width="' + w + '" height="' + Math.max(h, 0) + '" rx="3"><title>' +
+         r.title + ': ' + inr(r.interest) + '</title></rect>';
+    if (labels) {
+      var lab = r.title.replace('Year ', 'Y');
+      if (rows.length > 6) lab = lab.split(' ')[0];
+      s += '<text class="ax" x="' + (ml + k * bw + bw / 2) + '" y="' + (H - 9) + '" text-anchor="middle">' + lab + '</text>';
+    }
+  });
+  el.innerHTML = s + '</svg>';
+}
+
+function renderSavings() {
+  chipRefs.forEach(function (c) { c.el.setAttribute('aria-pressed', c.test() ? 'true' : 'false'); });
+  var principal = parseNum(st.amount) || 0;
+  $('words').textContent = inWords(principal);
+  var endMs = addPeriod(st.startMs, st.years, st.months, st.days);
+  $('ends').textContent = fmtDate(endMs);
+  $('freq-hint').textContent = 'Interest accrues every day on your closing balance. It is ' +
+    (st.mode === 'compound' ? 'added' : 'paid out') + ' at the end of each ' + st.freq.toLowerCase() + ' period.';
+
+  var g = getSlabs(), slabs = g.slabs || null;
+  st.slabs.forEach(function (s, i) {
+    var pl = i > 0 ? parseNum(st.slabs[i - 1].limit) : 0;
+    var el = $('slbl' + i);
+    if (el) el.textContent = 'Slab ' + (i + 1) + (pl !== null ? ' · from ' + shortINR(pl) : '');
+  });
+  var rowsHtml = '', splitHtml = '';
+  if (slabs) {
+    var prevUp = 0, n = slabs.length;
+    slabs.forEach(function (s, i) {
+      var label = n === 1 ? 'All balances' : i === 0 ? 'Up to ' + shortINR(s.upTo)
+                : i === n - 1 ? 'Above ' + shortINR(prevUp) : shortINR(prevUp) + ' to ' + shortINR(s.upTo);
+      rowsHtml += '<div class="slabrow"><i class="dot" style="background:' + slabColor(i) + '"></i><span>' + label +
+                  '</span><span class="rate">' + s.rate + '%</span></div>';
+      if (principal > 0) {
+        var inSlab = Math.min(Math.max(principal - prevUp, 0), s.upTo - prevUp);
+        splitHtml += '<i style="width:' + (inSlab / principal * 100) + '%;background:' + slabColor(i) + '"></i>';
+      }
+      prevUp = s.upTo;
+    });
+  }
+  $('slab-rows').innerHTML = rowsHtml;
+  $('split').innerHTML = splitHtml;
+  $('slab-err').hidden = !g.error;
+  if (g.error) $('slab-err').textContent = g.error;
+
+  var r = null;
+  if (slabs && principal > 0) {
+    var out = calculate(principal, slabs, st.startMs, endMs, st.freq, st.mode);
+    if (out.totalDays > 0) r = out;
+  }
+  var pay = st.mode === 'payout';
+  $('h1l').textContent = pay ? 'Total received' : 'Final balance';
+  $('h2l').textContent = pay ? 'Average rate' : 'Effective rate';
+  $('h3l').textContent = pay ? 'First payout' : 'Days';
+  $('h-total').textContent = r ? inr(r.totalInterest) : '—';
+  $('h1v').textContent = r ? (r.finalAmount >= 1e5 ? shortINR(r.finalAmount) : inr(r.finalAmount)) : '—';
+  $('h2v').textContent = r ? r.effectiveRate.toFixed(2) + '%' : '—';
+  $('h3v').textContent = r ? (pay ? inr(r.firstCredit) : String(r.totalDays)) : '—';
+
+  $('detail').hidden = !r;
+  if (!r) return;
+  renderTax(r);
+  var run = 0; heroLine($('hero'), [0].concat(r.monthRows.map(function (m) { run += m.interest; return st.mode === 'payout' ? run : m.balance; })).map(function (v, i) { return i === 0 ? (st.mode === 'payout' ? 0 : (parseNum(st.amount) || 0)) : v; }));
+  var rows = st.view === 'Monthly' ? r.monthRows : r.yearRows;
+  drawChart(rows);
+  $('break-title').textContent = st.view === 'Monthly' ? 'Month by month' : 'Year by year';
+  var visible = st.showAll ? rows : rows.slice(0, 12);
+  $('list').innerHTML = visible.map(function (p) {
+    return '<div class="item"><div><div class="t">' + p.title + '</div><div class="s">' +
+      (pay ? 'Paid so far ' : 'Balance ') + inr(p.balance) + '</div></div><div class="v">+' + inr(p.interest) + '</div></div>';
+  }).join('');
+  $('more').hidden = rows.length <= 12;
+  $('more').textContent = st.showAll ? 'Show less' : 'Show all ' + rows.length;
+}
+
+// ---------- Tax breakdown statement ----------
+st.bdReg = null; st.bdFy = 0;
+function slabLabel(s, taxable) {
+  if (s.hi === Infinity) return 'Above ' + shortINR(s.lo);
+  return s.lo === 0 ? 'Up to ' + shortINR(s.hi) : shortINR(s.lo) + ' to ' + shortINR(s.hi);
+}
+function stmtRows(d, interestLabel) {
+  var r = '';
+  function line(lbl, val, cls) { r += '<div class="bl ' + (cls || '') + '"><span>' + lbl + '</span><b>' + val + '</b></div>'; }
+  line('Salary and other income', inr(d.other));
+  line(interestLabel, inr(d.interest));
+  line('Gross income', inr(d.gross), 'sum');
+  if (d.std > 0) line('Less: standard deduction', '− ' + inr(d.std), 'sub');
+  if (d.ttDed > 0) line('Less: ' + d.ttName + ' deduction on interest', '− ' + inr(d.ttDed), 'sub');
+  if (d.userDed > 0) line('Less: your deductions (80C, 80D and others)', '− ' + inr(d.userDed), 'sub');
+  line('Taxable income', inr(d.taxable), 'sum');
+  r += '<div class="bslab"><div class="bsh"><span>Slab</span><span>Rate</span><span>Income in slab</span><span>Tax</span></div>';
+  var shown = d.slabs.filter(function (s) { return s.amt > 0; });
+  if (!shown.length) r += '<div class="bsr"><span>No taxable income</span><span></span><span></span><span>' + inr(0) + '</span></div>';
+  shown.forEach(function (s) {
+    r += '<div class="bsr"><span>' + slabLabel(s) + '</span><span>' + (s.rate * 100).toFixed(s.rate * 100 % 1 ? 1 : 0) + '%</span><span>' + inr(s.amt) + '</span><span>' + inr(s.tax) + '</span></div>';
+  });
+  r += '</div>';
+  line('Tax on slabs', inr(d.slabSum), 'sum');
+  if (d.rebate > 0) line('Less: rebate (Section 87A)', '− ' + inr(d.rebate), 'sub');
+  if (d.relief > 0) line('Less: marginal relief above ₹12 lakh', '− ' + inr(d.relief), 'sub');
+  line('Tax before cess', inr(d.before), 'sum');
+  line('Add: health and education cess (4%)', '+ ' + inr(d.cess), 'sub');
+  line('Total income tax for the year', inr(d.total), 'total');
+  return r;
+}
+function renderBreakdown(el, x, kind) {
+  if (!x.fy.length) { el.innerHTML = ''; return; }
+  var better = x.new.total <= x.old.total ? 'new' : 'old';
+  if (!st.bdReg) st.bdReg = better;
+  if (st.bdFy >= x.fy.length) st.bdFy = 0;
+  var reg = st.bdReg, fy = x.fy[st.bdFy], pair = fy.d[reg];
+  var h = '<div class="bdctl"><div class="seg bdseg">' +
+    ['new', 'old'].map(function (k) { return '<button type="button" class="chip" data-bdreg="' + k + '" aria-pressed="' + (k === reg) + '">' + (k === 'new' ? 'New regime' : 'Old regime') + '</button>'; }).join('') + '</div>';
+  if (x.fy.length > 1) {
+    h += '<label class="bdfy"><span class="muted">Financial year</span><select class="slabin" data-bdfy>' +
+      x.fy.map(function (l, i) { return '<option value="' + i + '"' + (i === st.bdFy ? ' selected' : '') + '>' + l.title + '</option>'; }).join('') + '</select></label>';
+  }
+  h += '</div><div class="stmt">' + stmtRows(pair.w, 'Interest earned this year') + '</div>';
+  var extra = pair.w.total - pair.wo.total;
+  h += '<div class="stmt2"><div class="bl"><span>Tax on your income without this interest</span><b>' + inr(pair.wo.total) + '</b></div>' +
+       '<div class="bl total"><span>Extra tax caused by this interest</span><b>' + inr(extra) + '</b></div></div>';
+  var allw = x[reg].total;
+  if (x.fy.length > 1) h += '<p class="hint">All ' + x.fy.length + ' financial years together: ' + inr(allw) + ' of income tax on your income plus this interest. Each year repeats your yearly income, because that income continues in every year.</p>';
+  h += '<p class="hint">Surcharge applies only above ₹50 lakh of taxable income and is not included. GST is not part of income tax. It is charged on goods and services, so it does not appear here.</p>';
+  el.innerHTML = h;
+}
+function wireBreakdown(el, rerender) {
+  el.addEventListener('click', function (e) {
+    var b = e.target.closest('[data-bdreg]'); if (!b) return;
+    st.bdReg = b.getAttribute('data-bdreg'); rerender();
+  });
+  el.addEventListener('change', function (e) {
+    if (e.target.hasAttribute('data-bdfy')) { st.bdFy = parseInt(e.target.value, 10) || 0; rerender(); }
+  });
+}
+
+function renderTax(r) {
+  var other = Math.max(parseNum(st.inc) || 0, 0), ded = Math.max(parseNum(st.ded) || 0, 0);
+  var x = taxImpact(r.fyRows, st.age, other, st.sal, ded);
+  var gap = x.new.total - x.old.total;
+  function box(name, d, best) {
+    var pct = x.interest > 0 ? (d.onInterest / x.interest * 100).toFixed(1) + '%' : '—';
+    return '<div class="rbox' + (best ? ' best' : '') + '"><div class="rname">' + name +
+      (best ? '<span class="pill">Lower total tax</span>' : '') + '</div>' +
+      '<div class="rbig">' + inr(d.onInterest) + '</div><div class="rsub">tax on this interest</div><dl>' +
+      '<div><dt>Interest after tax</dt><dd>' + inr(x.interest - d.onInterest) + '</dd></div>' +
+      '<div><dt>Tax as % of interest</dt><dd>' + pct + '</dd></div>' +
+      '<div><dt>Total income tax, all years</dt><dd>' + inr(d.total) + '</dd></div></dl></div>';
+  }
+  $('cmp').innerHTML = box('New regime', x.new, gap < -1) + box('Old regime', x.old, gap > 1);
+  renderBreakdown($('bd'), x, 'savings');
+  var note = 'Banks do not deduct TDS from savings account interest, so you pay this tax yourself when you file your return. ' +
+    'Interest is counted in the financial year it accrues, and every year uses FY 2026-27 slabs with 4% cess. ';
+  note += st.age === 0 ? 'The old regime also deducts up to ₹10,000 of savings interest (Section 80TTA); the new regime does not. '
+                       : 'The old regime also deducts up to ₹50,000 of interest (Section 80TTB); the new regime does not. ';
+  if (x.maxTaxable > 5000000) note += 'Surcharge for taxable income above ₹50 lakh is not included. ';
+  $('tax-note').textContent = note + 'This is an estimate, not tax advice.';
+  var h = '<div class="fyrow h"><span>Year</span><span>Interest</span><span>Tax, new</span><span>Tax, old</span></div>';
+  x.fy.forEach(function (l) {
+    h += '<div class="fyrow"><span>' + l.title + '</span><span>' + inr(l.interest) + '</span><span>' + inr(l.new) + '</span><span>' + inr(l.old) + '</span></div>';
+  });
+  $('fy-list').innerHTML = h;
+}
+
+function render() {
+  if (st.tab === 'fd' || st.tab === 'rd') renderDeposit(st.tab); else renderSavings();
+}
+
+// ---------- Fixed deposit and recurring deposit tabs ----------
+st.tab = 'savings';
+st.pan = true; st.oth = '0';
+var FD_DEFAULT = [['7', '29', '3.25', '3.50'], ['30', '45', '3.50', '3.75'], ['46', '90', '4.50', '4.75'], ['91', '180', '5.00', '5.25'],
+  ['181', '364', '6.50', '6.75'], ['365', '370', '6.50', '6.75'], ['371', '499', '7.00', '7.25'], ['500', '1095', '7.10', '7.35'],
+  ['1096', '1825', '6.75', '7.00'], ['1826', '3650', '6.00', '6.25']];
+var RD_DEFAULT = [['6', '6.50', '6.75'], ['9', '6.50', '6.75'], ['12', '6.50', '6.75'], ['24', '7.10', '7.35'], ['36', '7.10', '7.35']];
+function fdBandsDefault() { return FD_DEFAULT.map(function (r) { return { from: r[0], to: r[1], gen: r[2], sen: r[3] }; }); }
+function rdBandsDefault() { return RD_DEFAULT.map(function (r) { return { months: r[0], gen: r[1], sen: r[2] }; }); }
+st.fd = { amount: '1000000', rate: '7', years: 1, months: 0, days: 0, startMs: todayMs, mode: 'cumulative', override: false, leap: true, round: true,
+  bands: fdBandsDefault() };
+st.rd = { amount: '10000', rate: '6.5', n: 36, startMs: todayMs, override: false, bands: rdBandsDefault(), minInst: '100', maxInst: '125000' };
+
+function depositHTML(p) {
+  var fd = p === 'fd';
+  var hero = '<section class="hero" id="' + p + '-hero" aria-live="polite"><div class="eyebrow" id="' + p + '-eye"></div>' +
+    '<div class="big" id="' + p + '-big">—</div><hr><div class="stats">' +
+    [1, 2, 3].map(function (i) { return '<div class="stat"><span id="' + p + '-s' + i + 'l"></span><b id="' + p + '-s' + i + 'v">—</b></div>'; }).join('') +
+    '</div></section>';
+  var card1 = '<section class="card"><h2>' + (fd ? 'Deposit' : 'Instalment') + '</h2>' +
+    '<label class="field" for="' + p + '-amt">' + (fd ? 'Amount (₹)' : 'Monthly deposit (₹)') + '</label>' +
+    '<div class="amount"><span>₹</span><input id="' + p + '-amt" type="text" inputmode="decimal" autocomplete="off"></div>' +
+    '<p class="words" id="' + p + '-words"></p><div class="chips" id="' + p + '-amt-presets"></div>' +
+    (fd ? '' : '<p class="hint" id="rd-limit"></p>') +
+    '<div class="ratebox"><div class="rsub">Interest rate from your rate card</div><div class="rv" id="' + p + '-rate-big">—</div><div class="why" id="' + p + '-rate-why"></div></div>' +
+    '<label class="check" style="margin-top:12px" for="' + p + '-ovr"><input id="' + p + '-ovr" type="checkbox"> Use a different rate</label>' +
+    '<div id="' + p + '-ovr-box" hidden style="margin-top:10px"><label class="field" for="' + p + '-rate">Rate (% per year)</label>' +
+    '<input class="slabin" id="' + p + '-rate" type="text" inputmode="decimal" autocomplete="off"></div></section>';
+  var custom = fd
+    ? '<div class="grid3"><div><label class="field" for="fd-y">Years</label><input class="num" id="fd-y" type="number" min="0" max="10" step="1" inputmode="numeric"></div>' +
+      '<div><label class="field" for="fd-m">Months</label><input class="num" id="fd-m" type="number" min="0" max="11" step="1" inputmode="numeric"></div>' +
+      '<div><label class="field" for="fd-d">Days</label><input class="num" id="fd-d" type="number" min="0" max="30" step="1" inputmode="numeric"></div></div>'
+    : '<div class="grid3"><div><label class="field" for="rd-n">Months</label><input class="num" id="rd-n" type="number" min="1" max="120" step="1" inputmode="numeric"></div></div>';
+  var card2 = '<section class="card"><h2>Period</h2><label class="field" for="' + p + '-start">Start date</label>' +
+    '<input id="' + p + '-start" type="date"><div class="chips" id="' + p + '-ten-presets"></div>' +
+    '<div class="row"><span class="muted">Matures on</span><b id="' + p + '-ends"></b></div>' +
+    '<details><summary>Custom period</summary>' + custom + '</details></section>';
+  var card3 = fd ? '<section class="card"><h2>Interest option</h2><div class="seg s3" id="fd-mode"></div><p class="hint" id="fd-mode-hint"></p></section>' : '';
+  var head = fd ? '<div class="rc h"><span>Tenure</span><span>General</span><span>Senior</span></div>' : '<div class="rc h"><span>Tenure</span><span>General</span><span>Senior</span></div>';
+  var editHead = fd
+    ? '<div class="crow head"><span>From (days)</span><span>To (days)</span><span>General %</span><span>Senior %</span><span></span></div>'
+    : '<div class="crow c3 head"><span>Months</span><span>General %</span><span>Senior %</span><span></span></div>';
+  var extra = fd ? '<div class="stack" style="margin-top:14px"><label class="check" for="fd-leap"><input id="fd-leap" type="checkbox"> Count 366 days in financial years that include 29 February</label>' +
+                   '<label class="check" for="fd-round"><input id="fd-round" type="checkbox"> Round interest to the nearest rupee at each credit</label></div>'
+                 : '<div class="crow c3 head"><span>Min instalment (₹)</span><span>Max instalment (₹)</span><span></span><span></span></div>' +
+                   '<div class="crow c3"><input class="slabin" id="rd-min" inputmode="decimal" aria-label="Minimum monthly instalment"><input class="slabin" id="rd-max" inputmode="decimal" aria-label="Maximum monthly instalment"><span></span><span></span></div>';
+  var cardRates = '<section class="card"><h2>Rate card</h2><p class="hint" style="margin:0 0 8px">Example rates. Edit them to match your bank.</p><div id="' + p + '-card-rows">' + head + '</div>' +
+    '<details><summary>Edit rate card</summary>' +
+    '<p class="hint">These starting rates are an example rate card. Change any rate to match your bank, add or remove a tenure, or reset. The rate is picked by your tenure and age (60 or above gets the senior rate).</p>' +
+    editHead + '<div id="' + p + '-card-edit"></div>' + extra +
+    '<button class="addbtn" id="' + p + '-add" type="button">+ Add ' + (fd ? 'tenure band' : 'tenure') + '</button>' +
+    '<button class="linkbtn" id="' + p + '-reset" type="button">Reset to example</button>' +
+    '<p class="err" id="' + p + '-card-err" hidden></p></details></section>';
+  var detail = '<div class="detail" id="' + p + '-detail">' +
+    '<section class="card"><h2>' + (fd ? 'How the deposit grows' : 'How your savings grow') + '</h2><div class="gchart" id="' + p + '-chart"></div>' +
+    '<div class="legend"><span><i style="background:var(--muted)"></i>' + (fd ? 'Principal' : 'Deposited so far') + '</span>' +
+    '<span><i style="background:var(--accent)"></i>' + (fd ? 'Principal and interest' : 'Value with interest') + '</span></div></section>' +
+    '<section class="card"><h2>TDS and income tax</h2><div id="' + p + '-tds"></div><div class="cmp" id="' + p + '-cmp"></div>' +
+    '<p class="hint" id="' + p + '-note"></p><details open class="bdwrap"><summary>How your tax is worked out</summary><div class="bd" id="' + p + '-bd"></div></details><details><summary>By financial year</summary><div class="fytab" id="' + p + '-fy"></div></details></section></div>';
+  return hero + '<div class="controls" id="' + p + '-controls">' + card1 + card2 + card3 + cardRates + '</div>' + detail;
+}
+
+function mkInput(value, label, onInput) {
+  var i = document.createElement('input');
+  i.className = 'slabin'; i.type = 'text'; i.inputMode = 'decimal'; i.value = value; i.setAttribute('aria-label', label);
+  i.addEventListener('input', function (e) { onInput(e.target.value); render(); });
+  return i;
+}
+function mkDel(label, disabled, onClick) {
+  var b = document.createElement('button');
+  b.type = 'button'; b.className = 'xbtn'; b.textContent = '×'; b.setAttribute('aria-label', label); b.disabled = disabled;
+  b.addEventListener('click', function () { onClick(); render(); });
+  return b;
+}
+function buildCardEditor(p) {
+  var s = st[p], fd = p === 'fd', box = $(p + '-card-edit'), n = s.bands.length;
+  box.innerHTML = '';
+  s.bands.forEach(function (b, i) {
+    var row = document.createElement('div'); row.className = 'crow' + (fd ? '' : ' c3');
+    if (fd) {
+      row.appendChild(mkInput(b.from, 'Band ' + (i + 1) + ' from day', function (v) { b.from = v; }));
+      row.appendChild(mkInput(b.to, 'Band ' + (i + 1) + ' to day', function (v) { b.to = v; }));
+    } else {
+      row.appendChild(mkInput(b.months, 'Tenure ' + (i + 1) + ' in months', function (v) { b.months = v; }));
+    }
+    row.appendChild(mkInput(b.gen, 'Row ' + (i + 1) + ' general rate percent', function (v) { b.gen = v; }));
+    row.appendChild(mkInput(b.sen, 'Row ' + (i + 1) + ' senior citizen rate percent', function (v) { b.sen = v; }));
+    row.appendChild(mkDel('Remove row ' + (i + 1), n <= 1, function () { s.bands.splice(i, 1); buildCardEditor(p); }));
+    box.appendChild(row);
+  });
+}
+
+function wireDeposit(p) {
+  var fd = p === 'fd', s = st[p];
+  $('tab-' + p).innerHTML = depositHTML(p);
+  $(p + '-amt').value = intFmt.format(parseNum(s.amount));
+  $(p + '-rate').value = s.rate;
+  $(p + '-ovr').checked = s.override;
+  $(p + '-start').value = iso(s.startMs);
+  $(p + '-amt').addEventListener('input', function (e) { s.amount = e.target.value; render(); });
+  $(p + '-amt').addEventListener('blur', function (e) { var n = parseNum(e.target.value); if (n !== null && n >= 0) e.target.value = intFmt.format(n); });
+  $(p + '-rate').addEventListener('input', function (e) { s.rate = e.target.value; render(); });
+  $(p + '-ovr').addEventListener('change', function (e) { s.override = e.target.checked; render(); });
+  $(p + '-start').addEventListener('input', function (e) {
+    var q = e.target.value.split('-');
+    if (q.length === 3) { s.startMs = Date.UTC(+q[0], +q[1] - 1, +q[2]); render(); }
+  });
+  var amtPresets = fd ? [['₹1 L', 1e5], ['₹5 L', 5e5], ['₹10 L', 1e6], ['₹25 L', 2.5e6], ['₹50 L', 5e6]]
+                      : [['₹1,000', 1000], ['₹5,000', 5000], ['₹10,000', 10000], ['₹25,000', 25000], ['₹1,00,000', 100000]];
+  amtPresets.forEach(function (a) {
+    makeChip($(p + '-amt-presets'), a[0], function () { return parseNum(s.amount) === a[1]; },
+      function () { s.amount = String(a[1]); $(p + '-amt').value = intFmt.format(a[1]); render(); });
+  });
+  if (fd) {
+    [['6 M', 0, 6], ['1 Y', 1, 0], ['2 Y', 2, 0], ['3 Y', 3, 0], ['5 Y', 5, 0], ['10 Y', 10, 0]].forEach(function (x) {
+      makeChip($('fd-ten-presets'), x[0], function () { return s.years === x[1] && s.months === x[2] && s.days === 0; },
+        function () { s.years = x[1]; s.months = x[2]; s.days = 0; syncFd(); render(); });
+    });
+    [['fd-y', 'years', 10], ['fd-m', 'months', 11], ['fd-d', 'days', 30]].forEach(function (c) {
+      $(c[0]).addEventListener('input', function (e) {
+        var n = parseInt(e.target.value, 10); s[c[1]] = isNaN(n) ? 0 : Math.max(0, Math.min(c[2], n)); render();
+      });
+    });
+    [['cumulative', 'Cumulative'], ['monthly', 'Monthly payout'], ['quarterly', 'Quarterly payout']].forEach(function (m) {
+      makeChip($('fd-mode'), m[1], function () { return s.mode === m[0]; }, function () { s.mode = m[0]; render(); });
+    });
+    $('fd-leap').checked = s.leap; $('fd-round').checked = s.round;
+    $('fd-leap').addEventListener('change', function (e) { s.leap = e.target.checked; render(); });
+    $('fd-round').addEventListener('change', function (e) { s.round = e.target.checked; render(); });
+    syncFd();
+  } else {
+    $('rd-ten-presets').addEventListener('click', function (e) {
+      var b = e.target.closest ? e.target.closest('button') : null;
+      if (!b) return;
+      s.n = Number(b.dataset.n); $('rd-n').value = s.n; render();
+    });
+    $('rd-n').value = s.n;
+    $('rd-n').addEventListener('input', function (e) {
+      var n = parseInt(e.target.value, 10); s.n = isNaN(n) ? 0 : Math.max(0, Math.min(120, n)); render();
+    });
+    $('rd-min').value = s.minInst; $('rd-max').value = s.maxInst;
+    $('rd-min').addEventListener('input', function (e) { s.minInst = e.target.value; render(); });
+    $('rd-max').addEventListener('input', function (e) { s.maxInst = e.target.value; render(); });
+  }
+  buildCardEditor(p);
+  $(p + '-add').addEventListener('click', function () {
+    var l = s.bands[s.bands.length - 1];
+    if (fd) {
+      var lt = l ? parseNum(l.to) : 0; lt = lt === null ? 0 : lt;
+      s.bands.push({ from: String(lt + 1), to: String(lt + 365), gen: l ? l.gen : '6.00', sen: l ? l.sen : '6.25' });
+    } else {
+      var lm = l ? parseNum(l.months) : 0; lm = lm === null ? 0 : lm;
+      s.bands.push({ months: String(lm + 12), gen: l ? l.gen : '6.50', sen: l ? l.sen : '6.75' });
+    }
+    buildCardEditor(p); render();
+  });
+  $(p + '-reset').addEventListener('click', function () {
+    if (fd) { s.bands = fdBandsDefault(); s.leap = true; s.round = true; $('fd-leap').checked = true; $('fd-round').checked = true; }
+    else { s.bands = rdBandsDefault(); s.minInst = '100'; s.maxInst = '125000'; $('rd-min').value = s.minInst; $('rd-max').value = s.maxInst; }
+    buildCardEditor(p); render();
+  });
+}
+function syncFd() { $('fd-y').value = st.fd.years; $('fd-m').value = st.fd.months; $('fd-d').value = st.fd.days; }
+
+function fmtMonYear(ms) { var d = new Date(ms); return MON[d.getUTCMonth()] + ' ' + d.getUTCFullYear(); }
+// Small growth curve inside the results panel. totals = values over time; animates the first time a panel is drawn.
+function heroLine(heroEl, totals) {
+  if (!heroEl) return;
+  var big = heroEl.querySelector('.big'); if (!big) return;
+  var old = heroEl.querySelector('.hline'), first = !old || !old.dataset.seen;
+  if (old) old.remove();
+  if (!totals || totals.length < 2) return;
+  var W = 600, H = 76, lo = Math.min.apply(null, totals), hi = Math.max.apply(null, totals), sp = hi - lo || 1, n = totals.length;
+  var d = totals.map(function (v, i) { return (i ? 'L' : 'M') + (i / (n - 1) * W).toFixed(1) + ' ' + (H - 6 - (v - lo) / sp * (H - 14)).toFixed(1); }).join(' ');
+  var svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  svg.setAttribute('class', 'hline' + (first ? ' in' : '')); svg.dataset.seen = '1';
+  svg.setAttribute('viewBox', '0 0 ' + W + ' ' + H); svg.setAttribute('preserveAspectRatio', 'none'); svg.setAttribute('aria-hidden', 'true');
+  svg.innerHTML = '<path class="ha" d="' + d + ' L' + W + ' ' + H + ' L0 ' + H + ' Z"></path><path class="hl" pathLength="1" d="' + d + '"></path>';
+  big.insertAdjacentElement('afterend', svg);
+}
+function drawGrowth(el, pts) {
+  var W = Math.max(280, el.clientWidth || 560), H = 240, ml = 62, mr = 10, mt = 10, mb = 28;
+  var pw = W - ml - mr, ph = H - mt - mb;
+  var t0 = pts[0].ms, t1 = pts[pts.length - 1].ms, span = Math.max(t1 - t0, 1);
+  var max = Math.max.apply(null, pts.map(function (p) { return p.total; })); if (!(max > 0)) max = 1;
+  var minP = Math.min.apply(null, pts.map(function (p) { return p.principal; }));
+  var lo = (minP > 0 && (max - minP) < minP * 0.6) ? Math.max(minP - (max - minP) * 1.2, 0) : 0;
+  var step = niceStep(max - lo), ymin = Math.floor(lo / step) * step;
+  var n = Math.max(1, Math.ceil((max - ymin) / step - 1e-9)), top = ymin + n * step;
+  function X(ms) { return ml + (ms - t0) / span * pw; }
+  function Y(v) { return mt + ph - (v - ymin) / (top - ymin) * ph; }
+  var s = '<svg viewBox="0 0 ' + W + ' ' + H + '" role="img" aria-label="Growth over time">';
+  for (var i = 0; i <= n; i++) {
+    var v = ymin + step * i, y = Y(v);
+    s += '<line class="grid" x1="' + ml + '" x2="' + (W - mr) + '" y1="' + y + '" y2="' + y + '"/>' +
+         '<text class="ax" x="' + (ml - 8) + '" y="' + (y + 4) + '" text-anchor="end">' + tickLabel(v) + '</text>';
+  }
+  var line = pts.map(function (p, k) { return (k ? 'L' : 'M') + X(p.ms).toFixed(1) + ' ' + Y(p.total).toFixed(1); }).join(' ');
+  s += '<path class="area" d="' + line + ' L' + X(t1).toFixed(1) + ' ' + Y(ymin) + ' L' + X(t0).toFixed(1) + ' ' + Y(ymin) + ' Z"/>';
+  s += '<path class="pline" d="' + pts.map(function (p, k) { return (k ? 'L' : 'M') + X(p.ms).toFixed(1) + ' ' + Y(p.principal).toFixed(1); }).join(' ') + '"/>';
+  s += '<path class="vline" d="' + line + '"/>';
+  [0, 1 / 3, 2 / 3, 1].forEach(function (f, k) {
+    s += '<text class="ax" x="' + (ml + f * pw) + '" y="' + (H - 8) + '" text-anchor="' + (k === 0 ? 'start' : k === 3 ? 'end' : 'middle') + '">' + fmtMonYear(t0 + f * span) + '</text>';
+  });
+  el.innerHTML = s + '</svg>';
+}
+
+function monLabel(m) { return m >= 12 && m % 12 === 0 ? (m / 12) + ' Y' : m + ' M'; }
+function syncRdChips(bands) {
+  var box = $('rd-ten-presets'), key = bands ? bands.map(function (b) { return b.months; }).join(',') : '';
+  if (box.dataset.key !== key) {
+    box.dataset.key = key;
+    box.innerHTML = bands ? bands.map(function (b) { return '<button type="button" class="chip" data-n="' + b.months + '">' + monLabel(b.months) + '</button>'; }).join('') : '';
+  }
+  Array.prototype.forEach.call(box.children, function (b) { b.setAttribute('aria-pressed', Number(b.dataset.n) === st.rd.n ? 'true' : 'false'); });
+}
+function rcRow(label, g, sn, on, senior) {
+  return '<div class="rc' + (on ? ' on' : '') + '"><span>' + label + '</span><span' + (!senior && on ? ' class="use"' : '') + '>' + g.toFixed(2) +
+         '%</span><span' + (senior && on ? ' class="use"' : '') + '>' + sn.toFixed(2) + '%</span></div>';
+}
+function renderDeposit(p) {
+  chipRefs.forEach(function (c) { c.el.setAttribute('aria-pressed', c.test() ? 'true' : 'false'); });
+  var fd = p === 'fd', s = st[p], senior = st.age >= 1;
+  var amt = parseNum(s.amount) || 0;
+  $(p + '-words').textContent = inWords(amt);
+  var rate = null, why = '', simple = false, parsed, activeIdx = -1, endMs, lookup = 0;
+  var rows = '';
+  var head = $(p + '-card-rows').firstChild.outerHTML;
+  if (fd) {
+    endMs = addPeriod(s.startMs, s.years, s.months, s.days);
+    lookup = fdLookupDays(s.years, s.months, s.days);
+    parsed = parseFdBands(s.bands);
+    if (parsed.bands) {
+      var pk = pickFdRate(parsed.bands, lookup, senior);
+      if (pk) { rate = pk.rate; activeIdx = pk.idx; why = (senior ? 'Senior citizen' : 'General') + ' rate for ' + bandLabel(parsed.bands[pk.idx]); }
+      else why = 'The rate card has no band for ' + fmtDays(lookup) + '. Add one under Edit rate card, or use a different rate.';
+    }
+    simple = s.mode === 'cumulative' && lookup <= 180;
+    if (parsed.bands) parsed.bands.forEach(function (b, i) { rows += rcRow(bandLabel(b), b.gen, b.sen, i === activeIdx, senior); });
+  } else {
+    endMs = addPeriod(s.startMs, 0, s.n, 0);
+    parsed = parseRdBands(s.bands);
+    syncRdChips(parsed.bands);
+    if (parsed.bands) {
+      var pr = pickRdRate(parsed.bands, s.n, senior);
+      if (pr) {
+        rate = pr.rate; activeIdx = pr.idx;
+        why = (senior ? 'Senior citizen' : 'General') + ' rate for ' + (pr.exact ? s.n + ' months' : s.n + ' months, using the closest card tenure of ' + parsed.bands[pr.idx].months + ' months');
+      }
+      parsed.bands.forEach(function (b, i) { rows += rcRow(b.months + ' months', b.gen, b.sen, i === activeIdx && pr && pr.exact, senior); });
+    }
+    var mi = parseNum(s.minInst), ma = parseNum(s.maxInst);
+    $('rd-limit').textContent = (mi !== null && ma !== null && amt > 0 && (amt < mi || amt > ma))
+      ? 'Your rate card allows ₹' + intFmt.format(mi) + ' to ₹' + intFmt.format(ma) + ' a month. This amount is outside that range.' : '';
+  }
+  $(p + '-card-rows').innerHTML = head + rows;
+  $(p + '-card-err').hidden = !parsed.error;
+  if (parsed.error) $(p + '-card-err').textContent = parsed.error;
+  $(p + '-ovr-box').hidden = !s.override;
+  if (s.override) { rate = parseNum(s.rate); why = 'Your own rate'; if (rate === null || rate < 0 || rate > 30) why = 'Enter a rate between 0 and 30.'; }
+  $(p + '-rate-big').textContent = rate !== null ? rate.toFixed(2) + '%' : '—';
+  $(p + '-rate-why').textContent = why;
+  $(p + '-ends').textContent = fmtDate(endMs);
+  var rateOk = rate !== null && rate >= 0 && rate <= 30;
+  var res = null;
+  if (amt > 0 && rateOk) {
+    var out = fd ? fdCalc(amt, rate, s.startMs, endMs, s.mode, simple, { leap: s.leap, round: s.round }) : rdCalc(amt, rate, s.n, s.startMs);
+    if (out.days > 0 && out.interest >= 0 && out.fyRows.length) res = out;
+  }
+  if (fd) {
+    $('fd-mode-hint').textContent = (s.mode === 'cumulative'
+      ? (simple ? 'Rates up to 180 days use simple interest, paid with the principal at maturity.' : 'Interest is added to the deposit every quarter and paid with the principal at maturity.')
+      : 'Interest is paid out every ' + (s.mode === 'monthly' ? 'month' : 'quarter') + ' and the principal is returned at maturity. Banks pay monthly payouts at a discounted rate, so the real amount can be slightly lower.');
+  }
+  var payout = fd && s.mode !== 'cumulative';
+  $(p + '-eye').textContent = payout ? 'Total interest received' : 'Maturity value';
+  var labels;
+  if (fd) labels = payout ? ['Principal returned', 'First payout', 'Matures on'] : ['Interest earned', 'Yield a year', 'Matures on'];
+  else labels = ['Total deposited', 'Interest earned', 'Matures on'];
+  [1, 2, 3].forEach(function (i) { $(p + '-s' + i + 'l').textContent = labels[i - 1]; });
+  $(p + '-detail').hidden = !res;
+  if (!res) {
+    $(p + '-big').textContent = '—'; [1, 2, 3].forEach(function (i) { $(p + '-s' + i + 'v').textContent = '—'; });
+    return;
+  }
+  $(p + '-big').textContent = inr(payout ? res.interest : res.maturity);
+  var v1, v2;
+  if (fd) { v1 = payout ? inr(res.principal) : inr(res.interest); v2 = payout ? inr(res.firstPayout) : res.yieldPct.toFixed(2) + '%'; }
+  else { v1 = inr(res.deposited); v2 = inr(res.interest); }
+  $(p + '-s1v').textContent = v1; $(p + '-s2v').textContent = v2; $(p + '-s3v').textContent = fmtDate(endMs);
+  drawGrowth($(p + '-chart'), res.series);
+  heroLine($(p + '-hero'), res.series.map(function (q) { return q.total; }));
+  renderDepTax(p, res, fd);
+}
+
+function renderDepTax(p, res, fd) {
+  var other = Math.max(parseNum(st.inc) || 0, 0), ded = Math.max(parseNum(st.ded) || 0, 0), oth = Math.max(parseNum(st.oth) || 0, 0);
+  var x = taxImpact(res.fyRows, st.age, other, st.sal, ded, 'deposit');
+  var plan = tdsPlan(res.fyRows, st.age, st.pan, oth);
+  var total = res.interest;
+  var gap = x.new.total - x.old.total;
+  var ratePct = Math.round(plan.rate * 100);
+  var lim = plan.threshold >= 100000 ? '₹1,00,000' : '₹50,000';
+  var banner;
+  if (plan.total > 0) {
+    banner = '<div class="banner warn">The bank is likely to deduct about <b>' + inr(plan.total) + '</b> as TDS (' + ratePct + '%) because interest at this bank goes above ' + lim +
+      ' in ' + plan.crossed + ' financial year' + (plan.crossed > 1 ? 's' : '') + '.' + (st.pan ? '' : ' The rate is 20% because the PAN is not valid.') + '</div>';
+  } else {
+    banner = '<div class="banner ok">No TDS expected. Interest at this bank stays within the ' + lim + ' yearly limit. The income tax below is paid by you as advance tax or when you file.</div>';
+  }
+  $(p + '-tds').innerHTML = banner;
+  function box(name, reg, best) {
+    var d = x[reg], net = total - d.onInterest, diff = d.onInterest - plan.total;
+    var pr = fd && res.days > 0 && res.principal > 0
+      ? '<div><dt>After-tax yield a year</dt><dd>' + (((Math.pow((res.principal + net) / res.principal, 365 / res.days)) - 1) * 100).toFixed(2) + '%</dd></div>' : '';
+    return '<div class="rbox' + (best ? ' best' : '') + '"><div class="rname">' + name + (best ? '<span class="pill">Lower total tax</span>' : '') + '</div>' +
+      '<div class="rbig">' + inr(d.onInterest) + '</div><div class="rsub">income tax on this interest</div><dl>' +
+      '<div><dt>Interest after tax</dt><dd>' + inr(net) + '</dd></div>' + pr +
+      '<div><dt>TDS deducted by bank</dt><dd>' + inr(plan.total) + '</dd></div>' +
+      '<div><dt>' + (diff >= 0.5 ? (plan.total < 0.5 ? 'Tax payable by you (no TDS)' : 'Still to pay') : 'Refund when you file') + '</dt><dd>' + inr(Math.abs(diff) < 0.5 ? 0 : Math.abs(diff)) + '</dd></div></dl></div>';
+  }
+  $(p + '-cmp').innerHTML = box('New regime', 'new', gap < -1) + box('Old regime', 'old', gap > 1);
+  renderBreakdown($(p + '-bd'), x, 'deposit');
+  var note = 'Banks deduct TDS when interest is credited or compounded, and on interest accrued up to 31 March, so it can come before maturity. ' +
+    'The limit applies to all your FDs and RDs at one bank together, and TDS is charged on the whole interest once the limit is crossed (Section 393(1) under the Income-tax Act 2025, formerly 194A). ' +
+    'Tax is counted in the financial year interest accrues, using FY 2026-27 slabs with 4% cess. ';
+  note += st.age >= 1 ? 'In the old regime you can deduct up to ₹50,000 of deposit interest (Section 80TTB); the new regime has no such deduction. '
+                      : 'Under 60, neither regime has a deduction for FD or RD interest (Section 80TTA covers savings accounts only). ';
+  var zero = [];
+  if (plan.total > 0) {
+    if (x.new.total < 0.5) zero.push('new');
+    if (x.old.total < 0.5) zero.push('old');
+  }
+  if (zero.length) note += 'Your estimated tax is nil in the ' + zero.join(' and ') + ' regime, so you may be able to give the bank Form 121 (earlier Forms 15G and 15H) before the first interest credit of the year to avoid TDS. Banks apply their own checks, so confirm with yours. ';
+  if (x.maxTaxable > 5000000) note += 'Surcharge for taxable income above ₹50 lakh is not included. ';
+  $(p + '-note').textContent = note + 'This is an estimate, not tax advice.';
+  var h = '<div class="fyrow c5 h"><span>Year</span><span>Interest</span><span>TDS</span><span>Tax, new</span><span>Tax, old</span></div>';
+  x.fy.forEach(function (l, i) {
+    h += '<div class="fyrow c5"><span>' + l.title + '</span><span>' + inr(l.interest) + '</span><span>' + inr(plan.rows[i]) + '</span><span>' + inr(l.new) + '</span><span>' + inr(l.old) + '</span></div>';
+  });
+  $(p + '-fy').innerHTML = h;
+}
+
+// ---------- Tabs ----------
+function showTab(name) {
+  st.tab = name;
+  document.body.setAttribute('data-tab', name);
+  ['savings', 'fd', 'rd'].forEach(function (k) {
+    $('tab-' + k).hidden = k !== name;
+    $('tab-btn-' + k).setAttribute('aria-selected', k === name ? 'true' : 'false');
+  });
+  var host = name === 'savings' ? $('controls') : $(name + '-controls');
+  host.appendChild($('income-card'));
+  document.querySelectorAll('.dep-only').forEach(function (e) { e.hidden = name === 'savings'; });
+  render();
+}
+
+build();
+wireBreakdown($('bd'), render);
+wireDeposit('fd');
+wireDeposit('rd');
+wireBreakdown($('fd-bd'), render);
+wireBreakdown($('rd-bd'), render);
+$('oth').value = intFmt.format(parseNum(st.oth));
+$('pan').checked = st.pan;
+$('oth').addEventListener('input', function (e) { st.oth = e.target.value; render(); });
+$('pan').addEventListener('change', function (e) { st.pan = e.target.checked; render(); });
+['savings', 'fd', 'rd'].forEach(function (k) {
+  $('tab-btn-' + k).addEventListener('click', function () { showTab(k); });
+});
+var h0 = (location.hash || '').replace('#', '');
+showTab(h0 === 'fd' || h0 === 'rd' ? h0 : 'savings');
+</script>
+
+</body>
+</html>
