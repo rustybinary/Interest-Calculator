@@ -2,7 +2,7 @@
 
 A free, single-page calculator for Indian savings accounts, fixed deposits (FD) and recurring deposits (RD). It shows interest earned, TDS and the income tax you owe under both the old and new tax regimes.
 
-**Live page:** `https://rustybinary.github.io/interest-calculator/`
+**Live page:** `https://rustybinary.github.io/Interest-Calculator/`
 
 ## What it does
 
